@@ -1,0 +1,3 @@
+[submodule "external/lerobot"]
+	path = external/lerobot
+	url = https://github.com/CTP314/lerobot.git
