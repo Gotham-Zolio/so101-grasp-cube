@@ -131,6 +131,45 @@ uv run hello_pick_cube.py
 
 其中蓝色区域范围等任务参数，可以在 [pick_cube_so101.py](grasp_cube/envs/tasks/pick_cube_so101.py) 中找到相应位置调节或关闭可视化。
 
+### Web Viewer（无头模式）
+
+如果在无显示器的服务器上运行，或者希望通过浏览器查看仿真，可以使用 Web Viewer。
+
+#### 随机动作演示
+
+```bash
+uv run python hello_pick_cube_web.py --num_episodes 2 --random_actions
+```
+
+#### 运动规划可视化
+
+使用 Web Viewer 查看运动规划解决方案的执行过程：
+
+```bash
+uv run python hello_pick_cube_motionplanning_web.py --num_episodes 5
+```
+
+然后在浏览器中访问 `http://localhost:5000` 查看实时画面。
+
+如果端口 5000 被占用，可以使用 `--port` 参数指定其他端口：
+
+```bash
+uv run python hello_pick_cube_web.py --num_episodes 2 --random_actions --port 5001
+```
+
+更多使用说明请参考 [WEB_VIEWER_README.md](WEB_VIEWER_README.md)。
+
+如果在远程服务器上运行，可以使用 SSH 端口转发：
+
+```bash
+# 在本地机器上建立 SSH 连接时添加端口转发
+ssh -L 5000:localhost:5000 user@remote-server
+```
+
+参考结果：
+
+![web_viewer](assets/web_viewer_example.png)
+
 ## 运动规划
 
 实现一个基本的运动规划器 [base_motionplanner/motionplanner.py](grasp_cube/motionplanning/base_motionplanner)，支持输入末段目标位姿，返回末段位姿的路径点。
