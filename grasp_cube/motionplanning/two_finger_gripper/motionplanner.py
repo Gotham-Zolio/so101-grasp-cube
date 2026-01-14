@@ -22,8 +22,9 @@ class TwoFingerGripperMotionPlanningSolver(BaseMotionPlanningSolver):
         print_env_info: bool = True,
         joint_vel_limits=0.9,
         joint_acc_limits=0.9,
+        agent_idx: int = 0,
     ):
-        super().__init__(env, debug, vis, base_pose, print_env_info, joint_vel_limits, joint_acc_limits)
+        super().__init__(env, debug, vis, base_pose, print_env_info, joint_vel_limits, joint_acc_limits, agent_idx=agent_idx)
         self.gripper_state = self.OPEN
         self.visualize_target_grasp_pose = visualize_target_grasp_pose
         self.grasp_pose_visual = None
@@ -34,21 +35,77 @@ class TwoFingerGripperMotionPlanningSolver(BaseMotionPlanningSolver):
                 )
             else:
                 self.grasp_pose_visual = self.base_env.scene.actors["grasp_pose_visual"]
-            self.grasp_pose_visual.set_pose(self.base_env.agent.tcp_pose)
+            self.grasp_pose_visual.set_pose(self.env_agent.tcp_pose)
 
     def _update_grasp_visual(self, target: sapien.Pose) -> None:
         if self.grasp_pose_visual is not None:
             self.grasp_pose_visual.set_pose(target)
     
+    def _get_full_dual_arm_action(self, active_qpos, active_gripper_state, active_qvel=None):
+        """
+        Construct full dual-arm action for multi-agent environments.
+        For single-arm environments, returns single-arm action.
+        Returns action with batch dimension: (1, action_dim)
+        """
+        # Check if we're in a multi-agent environment
+        if hasattr(self.env_agent_full, "agents") and len(self.env_agent_full.agents) > 1:
+            # Get the other arm's current state
+            other_agent_idx = 1 - self.agent_idx
+            other_agent = self.env_agent_full.agents[other_agent_idx]
+            other_robot = other_agent.robot
+            
+            # Get other arm's qpos
+            other_qpos_full = other_robot.get_qpos()
+            if hasattr(other_qpos_full, 'cpu'):
+                other_qpos_full = other_qpos_full.cpu().numpy()
+            if other_qpos_full.ndim > 1:
+                other_qpos_full = other_qpos_full[0]
+            
+            # Get number of joints for other arm
+            num_joints_other = len(other_robot.get_active_joints())
+            other_qpos = other_qpos_full[:num_joints_other]
+            
+            # Get other arm's gripper state (track it or use default)
+            if not hasattr(self, '_other_arm_gripper_state'):
+                self._other_arm_gripper_state = self.OPEN
+            other_gripper_state = self._other_arm_gripper_state
+            
+            # Construct actions for both arms
+            if self.control_mode == "pd_joint_pos_vel":
+                active_action = np.hstack([active_qpos, active_qvel if active_qvel is not None else np.zeros(len(active_qpos)), active_gripper_state])
+                other_action = np.hstack([other_qpos, np.zeros(len(other_qpos)), other_gripper_state])
+            else:
+                active_action = np.hstack([active_qpos, active_gripper_state])
+                other_action = np.hstack([other_qpos, other_gripper_state])
+            
+            # Combine: order depends on agent_idx (0=left/first, 1=right/second)
+            if self.agent_idx == 0:
+                full_action = np.hstack([active_action, other_action])
+            else:
+                full_action = np.hstack([other_action, active_action])
+        else:
+            # Single arm environment
+            if self.control_mode == "pd_joint_pos_vel":
+                full_action = np.hstack([active_qpos, active_qvel if active_qvel is not None else np.zeros(len(active_qpos)), active_gripper_state])
+            else:
+                full_action = np.hstack([active_qpos, active_gripper_state])
+        
+        # Ensure batch dimension: (1, action_dim)
+        if full_action.ndim == 1:
+            full_action = full_action[None, :]
+        
+        return full_action
+    
     def follow_path(self, result, refine_steps: int = 0):
         n_step = result["position"].shape[0]
         for i in range(n_step + refine_steps):
             qpos = result["position"][min(i, n_step - 1)]
-            if self.control_mode == "pd_joint_pos_vel":
+            # Get qvel if available (for pd_joint_pos_vel mode)
+            qvel = None
+            if self.control_mode == "pd_joint_pos_vel" and "velocity" in result:
                 qvel = result["velocity"][min(i, n_step - 1)]
-                action = np.hstack([qpos, qvel, self.gripper_state])
-            else:
-                action = np.hstack([qpos, self.gripper_state])
+            # Use helper method to construct full dual-arm action
+            action = self._get_full_dual_arm_action(qpos, self.gripper_state, qvel)
             obs, reward, terminated, truncated, info = self.env.step(action)
             self.elapsed_steps += 1
             if self.print_env_info:
@@ -63,12 +120,21 @@ class TwoFingerGripperMotionPlanningSolver(BaseMotionPlanningSolver):
         if gripper_state is None:
             gripper_state = self.OPEN
         self.gripper_state = gripper_state
-        qpos = self.robot.get_qpos()[0, : len(self.planner.joint_vel_limits)].cpu().numpy()
+        
+        # Get current qpos
+        qpos_full = self.robot.get_qpos()
+        if hasattr(qpos_full, 'cpu'):
+            qpos_full = qpos_full.cpu().numpy()
+        if qpos_full.ndim > 1:
+            qpos_full = qpos_full[0]
+        
+        # Get number of joints (excluding gripper if it's separate)
+        num_joints = len(self.robot.get_active_joints())
+        qpos = qpos_full[:num_joints]
+        
         for i in range(t):
-            if self.control_mode == "pd_joint_pos":
-                action = np.hstack([qpos, self.gripper_state])
-            else:
-                action = np.hstack([qpos, qpos * 0, self.gripper_state])
+            # Use helper method to construct full dual-arm action
+            action = self._get_full_dual_arm_action(qpos, gripper_state)
             obs, reward, terminated, truncated, info = self.env.step(action)
             self.elapsed_steps += 1
             if self.print_env_info:
@@ -83,12 +149,21 @@ class TwoFingerGripperMotionPlanningSolver(BaseMotionPlanningSolver):
         if gripper_state is None:
             gripper_state = self.CLOSED
         self.gripper_state = gripper_state
-        qpos = self.robot.get_qpos()[0, : len(self.planner.joint_vel_limits)].cpu().numpy()
+        
+        # Get current qpos
+        qpos_full = self.robot.get_qpos()
+        if hasattr(qpos_full, 'cpu'):
+            qpos_full = qpos_full.cpu().numpy()
+        if qpos_full.ndim > 1:
+            qpos_full = qpos_full[0]
+        
+        # Get number of joints (excluding gripper if it's separate)
+        num_joints = len(self.robot.get_active_joints())
+        qpos = qpos_full[:num_joints]
+        
         for i in range(t):
-            if self.control_mode == "pd_joint_pos":
-                action = np.hstack([qpos, self.gripper_state])
-            else:
-                action = np.hstack([qpos, qpos * 0, self.gripper_state])
+            # Use helper method to construct full dual-arm action
+            action = self._get_full_dual_arm_action(qpos, gripper_state)
             obs, reward, terminated, truncated, info = self.env.step(action)
             self.elapsed_steps += 1
             if self.print_env_info:

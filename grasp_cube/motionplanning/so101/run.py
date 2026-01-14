@@ -11,11 +11,15 @@ import numpy as np
 from tqdm import tqdm
 import os.path as osp
 from mani_skill.utils.wrappers.record import RecordEpisode
+from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper
 from mani_skill.trajectory.merge_trajectory import merge_trajectories
-from grasp_cube.motionplanning.so101.solutions import solvePickCube
+from grasp_cube.motionplanning.so101.solutions import solvePickCube, solveLiftCube, solveStackCube, solveSortCube
 
 MP_SOLUTIONS = {
     "PickCubeSO101-v1": solvePickCube,
+    "LiftCubeSO101-v1": solveLiftCube,
+    "StackCubeSO101-v1": solveStackCube,
+    "SortCubeSO101-v1": solveSortCube,
 }
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
@@ -32,6 +36,7 @@ def parse_args(args=None):
     parser.add_argument("--shader", default="default", type=str, help="Change shader used for rendering. Default is 'default' which is very fast. Can also be 'rt' for ray tracing and generating photo-realistic renders. Can also be 'rt-fast' for a faster but lower quality ray-traced renderer")
     parser.add_argument("--record-dir", type=str, default="demos", help="where to save the recorded trajectories")
     parser.add_argument("--num-procs", type=int, default=1, help="Number of processes to use to help parallelize the trajectory replay process. This uses CPU multiprocessing and only works with the CPU simulation backend at the moment.")
+    parser.add_argument("--agent-idx", type=int, default=None, help="Which agent/arm to use for motion planning (0 for left/first arm, 1 for right/second arm). None means use default for each task (lift/stack use right arm, sort uses both arms).")
     return parser.parse_args()
 
 def _main(args, proc_id: int = 0, start_seed: int = 9) -> str:
@@ -46,6 +51,11 @@ def _main(args, proc_id: int = 0, start_seed: int = 9) -> str:
         viewer_camera_configs=dict(shader_pack=args.shader),
         sim_backend=args.sim_backend
     )
+    # Only wrap with FlattenActionSpaceWrapper if action space is Dict (multi-agent)
+    # Single-arm environments have Box action space which doesn't need flattening
+    from gymnasium.spaces import Dict
+    if isinstance(env.action_space, Dict):
+        env = FlattenActionSpaceWrapper(env)
     if env_id not in MP_SOLUTIONS:
         raise RuntimeError(f"No already written motion planning solutions for {env_id}. Available options are {list(MP_SOLUTIONS.keys())}")
 
@@ -76,8 +86,12 @@ def _main(args, proc_id: int = 0, start_seed: int = 9) -> str:
     failed_motion_plans = 0
     passed = 0
     while True:
+        solve_kwargs = {"seed": seed, "debug": False, "vis": True if args.vis else False}
+        if args.agent_idx is not None:
+            solve_kwargs["agent_idx"] = args.agent_idx
+        
         try:
-            res = solve(env, seed=seed, debug=False, vis=True if args.vis else False)
+            res = solve(env, **solve_kwargs)
         except Exception as e:
             print(f"Cannot find valid solution because of an error in motion planning solution: {e}")
             res = -1

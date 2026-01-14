@@ -8,15 +8,24 @@ from grasp_cube.motionplanning.so101.motionplanner import \
 from grasp_cube.motionplanning.base_motionplanner.utils import (
     compute_grasp_info_by_obb, get_actor_obb)
 
-def solve(env: PickCubeSO101Env, seed=None, debug=False, vis=False):
+def _get_agent(env: PickCubeSO101Env, agent_idx: int):
+    agent = env.unwrapped.agent
+    if hasattr(agent, "agents"):
+        return agent.agents[agent_idx]
+    return agent
+
+
+def solve(env: PickCubeSO101Env, seed=None, debug=False, vis=False, agent_idx: int = 0):
     env.reset(seed=seed)
+    agent = _get_agent(env, agent_idx)
     planner = SO101ArmMotionPlanningSolver(
         env,
         debug=False,
         vis=vis,
-        base_pose=env.unwrapped.agent.robot.pose,
+        base_pose=agent.robot.pose,
         visualize_target_grasp_pose=vis,
         print_env_info=False,
+        agent_idx=agent_idx,
     )
 
     FINGER_LENGTH = 0.025
@@ -28,7 +37,7 @@ def solve(env: PickCubeSO101Env, seed=None, debug=False, vis=False):
     approaching = np.array([0, 0, -1])
 
     # rotate around x-axis to align with the expected frame for computing grasp poses (Z is up/down)
-    tcp_pose = sapien.Pose(q=euler2quat(np.pi / 2, 0, 0)) * env.agent.tcp_pose.sp
+    tcp_pose = sapien.Pose(q=euler2quat(np.pi / 2, 0, 0)) * agent.tcp_pose.sp
     target_closing = (tcp_pose ).to_transformation_matrix()[:3, 1]
     # we can build a simple grasp pose using this information for Panda
     grasp_info = compute_grasp_info_by_obb(
@@ -38,7 +47,7 @@ def solve(env: PickCubeSO101Env, seed=None, debug=False, vis=False):
         depth=FINGER_LENGTH,
     )
     closing, center = grasp_info["closing"], grasp_info["center"]
-    grasp_pose = env.agent.build_grasp_pose(approaching, closing, env.cube.pose.sp.p)
+    grasp_pose = agent.build_grasp_pose(approaching, closing, env.cube.pose.sp.p)
 
     # due to how SO100 is defined we need to transform the grasp pose back to what is expected by SO100
     # [0, 1, -1, 0] / sqrt(2)

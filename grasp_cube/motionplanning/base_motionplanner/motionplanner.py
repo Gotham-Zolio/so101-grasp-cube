@@ -19,15 +19,22 @@ class BaseMotionPlanningSolver:
         print_env_info: bool = True,
         joint_vel_limits=0.9,
         joint_acc_limits=0.9,
+        agent_idx: int = 0,
     ):
         self.env = env
         self.base_env: BaseEnv = env.unwrapped
-        self.env_agent: BaseAgent = self.base_env.agent
+        self.agent_idx = agent_idx  # Save agent_idx as instance attribute
+        # Multi-agent compatibility: select a sub-agent when available
+        self.env_agent_full: BaseAgent = self.base_env.agent
+        if hasattr(self.env_agent_full, "agents"):
+            self.env_agent: BaseAgent = self.env_agent_full.agents[agent_idx]
+        else:
+            self.env_agent: BaseAgent = self.env_agent_full
         self.robot = self.env_agent.robot
         self.joint_vel_limits = joint_vel_limits
         self.joint_acc_limits = joint_acc_limits
 
-        self.base_pose = to_sapien_pose(base_pose)
+        self.base_pose = to_sapien_pose(base_pose or self.robot.pose)
 
         self.planner = self.setup_planner()
         self.control_mode = self.base_env.control_mode
