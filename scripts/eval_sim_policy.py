@@ -87,6 +87,11 @@ def parse_args():
         help="Directory to save evaluation results and videos"
     )
     parser.add_argument(
+        "--save-camera",
+        action="store_true",
+        help="Save camera images/videos separately"
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Print detailed debugging information"
@@ -94,14 +99,22 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_observation_from_env(env) -> Dict[str, Any]:
+def get_observation_from_env(env, verbose: bool = False) -> Dict[str, Any]:
     """
     Get observation in LeRobot format from ManiSkill environment.
     """
     env_unwrapped = env.unwrapped
     
+    # Ensure scene is updated before taking pictures
+    # This is critical - sensors need the scene to be rendered/updated
+    if hasattr(env_unwrapped, 'scene'):
+        env_unwrapped.scene.update_render()
+    
     # Get robot state (qpos)
-    if hasattr(env_unwrapped.agent, "agents"):
+    # Check if it's a multi-agent setup (dual-arm) or single agent
+    num_agents = len(env_unwrapped.agent.agents) if hasattr(env_unwrapped.agent, "agents") else 1
+    
+    if num_agents > 1:
         # Dual-arm
         left_qpos = env_unwrapped.agent.agents[0].robot.get_qpos()
         right_qpos = env_unwrapped.agent.agents[1].robot.get_qpos()
@@ -116,7 +129,7 @@ def get_observation_from_env(env) -> Dict[str, Any]:
             right_arm = right_arm[:6]
     else:
         # Single-arm
-        qpos = env_unwrapped.agent.robot.get_qpos()
+        qpos = env_unwrapped.agent.agents[0].robot.get_qpos() if hasattr(env_unwrapped.agent, "agents") else env_unwrapped.agent.robot.get_qpos()
         state = qpos.cpu().numpy() if isinstance(qpos, torch.Tensor) else qpos
         # Handle batch dimension
         if state.ndim > 1:
@@ -124,33 +137,324 @@ def get_observation_from_env(env) -> Dict[str, Any]:
         else:
             state = state[:6]
     
-    # Get images
-    obs_dict = env.get_obs()
+    # Get images from sensors (correct way to get camera images in ManiSkill)
     images = {}
     
-    # Get front camera image
-    if "image" in obs_dict and "front" in obs_dict["image"]:
-        front_img = obs_dict["image"]["front"]["rgb"]
-        if front_img.dtype != np.uint8:
-            if front_img.max() <= 1.0:
-                front_img = (front_img * 255).astype(np.uint8)
+    # Debug: check sensors availability
+    if verbose and not hasattr(get_observation_from_env, "_debug_printed"):
+        print(f"DEBUG: env_unwrapped has sensors: {hasattr(env_unwrapped, 'sensors')}")
+        if hasattr(env_unwrapped, 'sensors'):
+            sensors = env_unwrapped.sensors
+            if isinstance(sensors, dict):
+                print(f"DEBUG: Available sensors: {list(sensors.keys())}")
             else:
-                front_img = front_img.astype(np.uint8)
-        images["front"] = front_img
-    else:
-        images["front"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                print(f"DEBUG: sensors type: {type(sensors)}, value: {sensors}")
+        # Also check obs_dict structure
+        obs_dict = env.get_obs()
+        print(f"DEBUG: obs_dict keys: {list(obs_dict.keys())}")
+        if "sensor_data" in obs_dict:
+            sensor_data = obs_dict["sensor_data"]
+            print(f"DEBUG: sensor_data type: {type(sensor_data)}")
+            if isinstance(sensor_data, dict):
+                print(f"DEBUG: sensor_data keys: {list(sensor_data.keys())}")
+                if "front" in sensor_data:
+                    front_data = sensor_data["front"]
+                    print(f"DEBUG: front data type: {type(front_data)}")
+                    if isinstance(front_data, dict):
+                        print(f"DEBUG: front data keys: {list(front_data.keys())}")
+        get_observation_from_env._debug_printed = True
     
-    # Get wrist camera images (placeholder for now)
-    if hasattr(env_unwrapped.agent, "agents"):
-        images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-        images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+    # Get front camera image from sensors
+    if hasattr(env_unwrapped, 'sensors') and 'front' in env_unwrapped.sensors:
+        try:
+            front_camera = env_unwrapped.sensors['front']
+            front_img = front_camera.take_picture()
+            
+            # Handle batch dimension if present
+            if isinstance(front_img, torch.Tensor):
+                front_img = front_img.cpu().numpy()
+            if front_img.ndim == 4:
+                front_img = front_img[0]  # Remove batch dimension
+            
+            # Convert RGBA to RGB if needed
+            if front_img.shape[-1] == 4:
+                front_img = front_img[..., :3]
+            
+            # Convert to uint8
+            if front_img.dtype != np.uint8:
+                if front_img.max() <= 1.0:
+                    front_img = (front_img * 255).astype(np.uint8)
+                else:
+                    front_img = np.clip(front_img, 0, 255).astype(np.uint8)
+            
+            # Debug: check if image is all black
+            if verbose and not hasattr(get_observation_from_env, "_img_debug_printed"):
+                img_mean = front_img.mean()
+                img_max = front_img.max()
+                print(f"DEBUG: Front camera image - mean: {img_mean:.2f}, max: {img_max}, shape: {front_img.shape}, dtype: {front_img.dtype}")
+                if img_mean < 1.0:
+                    print(f"WARNING: Front camera image appears to be all black (mean={img_mean:.2f})")
+                get_observation_from_env._img_debug_printed = True
+            
+            images["front"] = front_img
+        except Exception as e:
+            if verbose:
+                print(f"WARNING: Failed to get front camera image: {e}")
+                import traceback
+                traceback.print_exc()
+            images["front"] = np.zeros((480, 640, 3), dtype=np.uint8)
     else:
-        images["wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+        # Fallback: try to get from obs_dict
+        obs_dict = env.get_obs()
+        if verbose and not hasattr(get_observation_from_env, "_obs_debug_printed"):
+            print(f"DEBUG: obs_dict keys: {list(obs_dict.keys())}")
+            if "sensor_data" in obs_dict:
+                print(f"DEBUG: sensor_data type: {type(obs_dict['sensor_data'])}")
+                if isinstance(obs_dict["sensor_data"], dict):
+                    print(f"DEBUG: sensor_data keys: {list(obs_dict['sensor_data'].keys())}")
+            get_observation_from_env._obs_debug_printed = True
+        
+        front_img = None
+        
+        # Try: obs_dict["sensor_data"]["front"]["rgb"] (ManiSkill format)
+        if "sensor_data" in obs_dict:
+            sensor_data = obs_dict["sensor_data"]
+            
+            # Handle different sensor_data structures
+            if isinstance(sensor_data, dict):
+                if "front" in sensor_data:
+                    front_data = sensor_data["front"]
+                    if isinstance(front_data, dict):
+                        if "rgb" in front_data:
+                            front_img = front_data["rgb"]
+                        elif "color" in front_data:
+                            front_img = front_data["color"]
+                    elif isinstance(front_data, (np.ndarray, torch.Tensor)):
+                        front_img = front_data
+                elif verbose and not hasattr(get_observation_from_env, "_sensor_debug_printed"):
+                    print(f"DEBUG: sensor_data keys: {list(sensor_data.keys())}")
+                    get_observation_from_env._sensor_debug_printed = True
+            elif isinstance(sensor_data, (np.ndarray, torch.Tensor)):
+                # sensor_data might be directly the image array
+                front_img = sensor_data
+        
+        # Try: obs_dict["image"]["front"]["rgb"]
+        if front_img is None and "image" in obs_dict and "front" in obs_dict["image"]:
+            front_img = obs_dict["image"]["front"]
+            if isinstance(front_img, dict) and "rgb" in front_img:
+                front_img = front_img["rgb"]
+        
+        # Process front image if found
+        if front_img is not None:
+            # Convert torch.Tensor to numpy
+            if isinstance(front_img, torch.Tensor):
+                front_img = front_img.cpu().numpy()
+            
+            # Handle batch dimension
+            if front_img.ndim == 4:
+                front_img = front_img[0]  # Remove batch dimension (B, H, W, C) -> (H, W, C)
+            elif front_img.ndim == 3:
+                # Check if it's (C, H, W) or (H, W, C)
+                if front_img.shape[0] == 3 or front_img.shape[0] == 4:
+                    # Shape is (C, H, W), convert to (H, W, C)
+                    front_img = front_img.transpose(1, 2, 0)
+            
+            # Convert to uint8
+            if front_img.dtype != np.uint8:
+                if front_img.max() <= 1.0:
+                    front_img = (front_img * 255).astype(np.uint8)
+                else:
+                    front_img = np.clip(front_img, 0, 255).astype(np.uint8)
+            
+            # Convert RGBA to RGB if needed
+            if front_img.ndim == 3 and front_img.shape[-1] == 4:
+                front_img = front_img[..., :3]
+            
+            # Debug: check image statistics
+            if verbose and not hasattr(get_observation_from_env, "_img_stats_printed"):
+                img_mean = front_img.mean()
+                img_max = front_img.max()
+                img_min = front_img.min()
+                print(f"DEBUG: Front camera image stats - mean: {img_mean:.2f}, min: {img_min:.2f}, max: {img_max:.2f}, shape: {front_img.shape}, dtype: {front_img.dtype}")
+                if img_mean < 1.0:
+                    print(f"WARNING: Front camera image appears to be all black (mean={img_mean:.2f})")
+                get_observation_from_env._img_stats_printed = True
+            
+            images["front"] = front_img
+        else:
+            if verbose:
+                print(f"WARNING: Could not find front camera in sensors or obs_dict")
+            images["front"] = np.zeros((480, 640, 3), dtype=np.uint8)
+    
+    # Get wrist camera images from sensors or sensor_data
+    # For dual-arm tasks (sort): left_wrist and right_wrist
+    # For single-arm tasks (lift, stack): right_wrist only
+    if num_agents > 1:
+        # Dual-arm: get left_wrist and right_wrist
+        # Try from sensors first
+        if hasattr(env_unwrapped, 'sensors'):
+            # Try left_wrist
+            if 'left_wrist' in env_unwrapped.sensors:
+                try:
+                    left_wrist_camera = env_unwrapped.sensors['left_wrist']
+                    left_wrist_img = left_wrist_camera.take_picture()
+                    if isinstance(left_wrist_img, torch.Tensor):
+                        left_wrist_img = left_wrist_img.cpu().numpy()
+                    if left_wrist_img.ndim == 4:
+                        left_wrist_img = left_wrist_img[0]
+                    if left_wrist_img.shape[-1] == 4:
+                        left_wrist_img = left_wrist_img[..., :3]
+                    if left_wrist_img.dtype != np.uint8:
+                        if left_wrist_img.max() <= 1.0:
+                            left_wrist_img = (left_wrist_img * 255).astype(np.uint8)
+                        else:
+                            left_wrist_img = np.clip(left_wrist_img, 0, 255).astype(np.uint8)
+                    images["left_wrist"] = left_wrist_img
+                except Exception as e:
+                    if verbose:
+                        print(f"WARNING: Failed to get left_wrist camera image: {e}")
+                    images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+            else:
+                images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+            
+            # Try right_wrist
+            if 'right_wrist' in env_unwrapped.sensors:
+                try:
+                    right_wrist_camera = env_unwrapped.sensors['right_wrist']
+                    right_wrist_img = right_wrist_camera.take_picture()
+                    if isinstance(right_wrist_img, torch.Tensor):
+                        right_wrist_img = right_wrist_img.cpu().numpy()
+                    if right_wrist_img.ndim == 4:
+                        right_wrist_img = right_wrist_img[0]
+                    if right_wrist_img.shape[-1] == 4:
+                        right_wrist_img = right_wrist_img[..., :3]
+                    if right_wrist_img.dtype != np.uint8:
+                        if right_wrist_img.max() <= 1.0:
+                            right_wrist_img = (right_wrist_img * 255).astype(np.uint8)
+                        else:
+                            right_wrist_img = np.clip(right_wrist_img, 0, 255).astype(np.uint8)
+                    images["right_wrist"] = right_wrist_img
+                except Exception as e:
+                    if verbose:
+                        print(f"WARNING: Failed to get right_wrist camera image: {e}")
+                    images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+            else:
+                images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+        else:
+            # Fallback: try from sensor_data
+            obs_dict = env.get_obs()
+            if "sensor_data" in obs_dict:
+                sensor_data = obs_dict["sensor_data"]
+                if isinstance(sensor_data, dict):
+                    # Try left_wrist
+                    if "left_wrist" in sensor_data:
+                        left_wrist_data = sensor_data["left_wrist"]
+                        if isinstance(left_wrist_data, dict) and "rgb" in left_wrist_data:
+                            left_wrist_img = left_wrist_data["rgb"]
+                            if isinstance(left_wrist_img, torch.Tensor):
+                                left_wrist_img = left_wrist_img.cpu().numpy()
+                            if left_wrist_img.ndim == 4:
+                                left_wrist_img = left_wrist_img[0]
+                            if left_wrist_img.shape[-1] == 4:
+                                left_wrist_img = left_wrist_img[..., :3]
+                            if left_wrist_img.dtype != np.uint8:
+                                if left_wrist_img.max() <= 1.0:
+                                    left_wrist_img = (left_wrist_img * 255).astype(np.uint8)
+                                else:
+                                    left_wrist_img = np.clip(left_wrist_img, 0, 255).astype(np.uint8)
+                            images["left_wrist"] = left_wrist_img
+                        else:
+                            images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                    else:
+                        images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                    
+                    # Try right_wrist
+                    if "right_wrist" in sensor_data:
+                        right_wrist_data = sensor_data["right_wrist"]
+                        if isinstance(right_wrist_data, dict) and "rgb" in right_wrist_data:
+                            right_wrist_img = right_wrist_data["rgb"]
+                            if isinstance(right_wrist_img, torch.Tensor):
+                                right_wrist_img = right_wrist_img.cpu().numpy()
+                            if right_wrist_img.ndim == 4:
+                                right_wrist_img = right_wrist_img[0]
+                            if right_wrist_img.shape[-1] == 4:
+                                right_wrist_img = right_wrist_img[..., :3]
+                            if right_wrist_img.dtype != np.uint8:
+                                if right_wrist_img.max() <= 1.0:
+                                    right_wrist_img = (right_wrist_img * 255).astype(np.uint8)
+                                else:
+                                    right_wrist_img = np.clip(right_wrist_img, 0, 255).astype(np.uint8)
+                            images["right_wrist"] = right_wrist_img
+                        else:
+                            images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                    else:
+                        images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                else:
+                    images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                    images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+            else:
+                images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+    else:
+        # Single-arm: get right_wrist only
+        if hasattr(env_unwrapped, 'sensors'):
+            if 'right_wrist' in env_unwrapped.sensors:
+                try:
+                    right_wrist_camera = env_unwrapped.sensors['right_wrist']
+                    right_wrist_img = right_wrist_camera.take_picture()
+                    if isinstance(right_wrist_img, torch.Tensor):
+                        right_wrist_img = right_wrist_img.cpu().numpy()
+                    if right_wrist_img.ndim == 4:
+                        right_wrist_img = right_wrist_img[0]
+                    if right_wrist_img.shape[-1] == 4:
+                        right_wrist_img = right_wrist_img[..., :3]
+                    if right_wrist_img.dtype != np.uint8:
+                        if right_wrist_img.max() <= 1.0:
+                            right_wrist_img = (right_wrist_img * 255).astype(np.uint8)
+                        else:
+                            right_wrist_img = np.clip(right_wrist_img, 0, 255).astype(np.uint8)
+                    images["right_wrist"] = right_wrist_img
+                except Exception as e:
+                    if verbose:
+                        print(f"WARNING: Failed to get right_wrist camera image: {e}")
+                    images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+            else:
+                images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+        else:
+            # Fallback: try from sensor_data
+            obs_dict = env.get_obs()
+            if "sensor_data" in obs_dict:
+                sensor_data = obs_dict["sensor_data"]
+                if isinstance(sensor_data, dict) and "right_wrist" in sensor_data:
+                    right_wrist_data = sensor_data["right_wrist"]
+                    if isinstance(right_wrist_data, dict) and "rgb" in right_wrist_data:
+                        right_wrist_img = right_wrist_data["rgb"]
+                        if isinstance(right_wrist_img, torch.Tensor):
+                            right_wrist_img = right_wrist_img.cpu().numpy()
+                        if right_wrist_img.ndim == 4:
+                            right_wrist_img = right_wrist_img[0]
+                        if right_wrist_img.shape[-1] == 4:
+                            right_wrist_img = right_wrist_img[..., :3]
+                        if right_wrist_img.dtype != np.uint8:
+                            if right_wrist_img.max() <= 1.0:
+                                right_wrist_img = (right_wrist_img * 255).astype(np.uint8)
+                            else:
+                                right_wrist_img = np.clip(right_wrist_img, 0, 255).astype(np.uint8)
+                        images["right_wrist"] = right_wrist_img
+                    else:
+                        images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                else:
+                    images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+            else:
+                images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+        
+        # For single-arm, also set left_wrist as placeholder (not used)
+        images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
     
     # Get task prompt
     task_prompt = getattr(env_unwrapped, "TASK_PROMPT", "")
     
-    if hasattr(env_unwrapped.agent, "agents"):
+    if num_agents > 1:
         return {
             "states": {
                 "left_arm": left_arm,
@@ -176,8 +480,11 @@ def main():
     output_dir = pathlib.Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     video_dir = output_dir / "videos"
+    camera_dir = output_dir / "camera_videos"
     if args.save_video:
         video_dir.mkdir(parents=True, exist_ok=True)
+    if args.save_camera:
+        camera_dir.mkdir(parents=True, exist_ok=True)
     
     # Load policy
     print(f"Loading policy from {args.policy_path}")
@@ -195,14 +502,35 @@ def main():
         render_mode="rgb_array",
         sim_backend="auto"
     )
-    env = FlattenActionSpaceWrapper(env)
+    # Only apply FlattenActionSpaceWrapper if action space is Dict (multi-agent/dual-arm)
+    # Single-arm environments have Box action space and don't need flattening
+    if isinstance(env.action_space, gym.spaces.Dict):
+        env = FlattenActionSpaceWrapper(env)
+    
+    # Auto-detect robot type from environment
+    env_unwrapped = env.unwrapped
+    num_agents = len(env_unwrapped.agent.agents) if hasattr(env_unwrapped.agent, "agents") else 1
+    if num_agents > 1:
+        detected_robot_type = "bi_so101"
+    else:
+        detected_robot_type = "so101"
+    
+    # Use detected robot type if not explicitly specified or if it differs
+    if args.robot_type != detected_robot_type:
+        print(f"Warning: Specified robot_type '{args.robot_type}' differs from detected '{detected_robot_type}'. Using detected type.")
+        args.robot_type = detected_robot_type
     
     print(f"Evaluating policy on {args.env_id}")
     print(f"Number of episodes: {args.num_episodes}")
+    print(f"Robot type: {args.robot_type} ({num_agents} arm{'s' if num_agents > 1 else ''})")
     if args.save_video:
         print(f"Videos will be saved to: {video_dir}")
         if args.save_failed_only:
             print("Only failed episodes will be saved")
+    if args.save_camera:
+        print(f"Camera videos will be saved to: {camera_dir}")
+        if args.save_failed_only:
+            print("Only failed episodes' camera videos will be saved")
     
     # Evaluate
     successes = []
@@ -221,10 +549,34 @@ def main():
         episode_rewards = []
         episode_actions = []
         frames = [] if args.save_video else None
+        camera_frames = {} if args.save_camera else None
         
         while not done:
+            # IMPORTANT: Render the scene before getting observations
+            # This ensures sensors have updated images
+            # Note: env.render() returns the render camera view, not sensor views
+            # But calling it ensures the scene is updated for sensors
+            if args.save_video:
+                _ = env.render()  # Update scene for rendering
+            
             # Get observation in LeRobot format
-            observation = get_observation_from_env(env)
+            # Pass verbose flag to enable debugging
+            observation = get_observation_from_env(env, verbose=args.verbose)
+            
+            # Save camera frames if requested
+            if args.save_camera and "images" in observation:
+                for camera_name, camera_img in observation["images"].items():
+                    if camera_name not in camera_frames:
+                        camera_frames[camera_name] = []
+                    # Ensure image is uint8 and correct format
+                    if isinstance(camera_img, torch.Tensor):
+                        camera_img = camera_img.cpu().numpy()
+                    if camera_img.dtype != np.uint8:
+                        if camera_img.max() <= 1.0:
+                            camera_img = (camera_img * 255).astype(np.uint8)
+                        else:
+                            camera_img = camera_img.astype(np.uint8)
+                    camera_frames[camera_name].append(camera_img.copy())
             
             # Get action from policy
             action = policy.get_actions(observation)
@@ -332,6 +684,76 @@ def main():
                             print(f"Saved video: {video_path}")
                         elif not video_written:
                             print(f"Warning: Failed to save video: {video_path}")
+        
+        # Save camera videos if requested
+        if args.save_camera and camera_frames:
+            should_save = not args.save_failed_only or not success
+            if should_save:
+                for camera_name, frames in camera_frames.items():
+                    if len(frames) == 0:
+                        continue
+                    camera_video_path = camera_dir / f"episode_{episode:04d}_{camera_name}_{'success' if success else 'failed'}.mp4"
+                    
+                    # Process frames
+                    processed_frames = []
+                    for frame in frames:
+                        if isinstance(frame, torch.Tensor):
+                            frame = frame.cpu().numpy()
+                        if frame.ndim == 4 and frame.shape[0] == 1:
+                            frame = frame[0]
+                        if frame.dtype != np.uint8:
+                            frame = np.clip(frame, 0, 255).astype(np.uint8)
+                        if frame.shape[-1] != 3:
+                            continue  # Skip if not RGB
+                        processed_frames.append(frame)
+                    
+                    if len(processed_frames) > 0:
+                        video_written = False
+                        
+                        # Try imageio first
+                        if IMAGEIO_AVAILABLE:
+                            try:
+                                imageio.mimsave(
+                                    str(camera_video_path),
+                                    processed_frames,
+                                    fps=20,
+                                    codec='libx264',
+                                    quality=8,
+                                    pixelformat='yuv420p'
+                                )
+                                video_written = True
+                            except Exception as e:
+                                if args.verbose:
+                                    print(f"Failed to save camera video with imageio: {e}, trying OpenCV...")
+                        
+                        # Fallback to OpenCV
+                        if not video_written:
+                            height, width = processed_frames[0].shape[:2]
+                            fourcc_options = [
+                                cv2.VideoWriter_fourcc(*'avc1'),
+                                cv2.VideoWriter_fourcc(*'XVID'),
+                                cv2.VideoWriter_fourcc(*'mp4v'),
+                            ]
+                            
+                            for fourcc in fourcc_options:
+                                try:
+                                    out = cv2.VideoWriter(str(camera_video_path), fourcc, 20.0, (width, height))
+                                    if out.isOpened():
+                                        for frame in processed_frames:
+                                            frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                                            out.write(frame_bgr)
+                                        out.release()
+                                        video_written = True
+                                        break
+                                except Exception as e:
+                                    if args.verbose:
+                                        print(f"Failed to write camera video with codec {fourcc}: {e}")
+                                    continue
+                        
+                        if video_written and args.verbose:
+                            print(f"Saved camera video ({camera_name}): {camera_video_path}")
+                        elif not video_written:
+                            print(f"Warning: Failed to save camera video ({camera_name}): {camera_video_path}")
     
     env.close()
     
@@ -407,6 +829,8 @@ def main():
     print(f"\nSummary saved to: {summary_file}")
     if args.save_video:
         print(f"Videos saved to: {video_dir}")
+    if args.save_camera:
+        print(f"Camera videos saved to: {camera_dir}")
 
 
 if __name__ == "__main__":

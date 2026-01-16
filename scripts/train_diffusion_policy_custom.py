@@ -296,7 +296,7 @@ def train(
     device: str = "cuda",
     save_freq: int = 10,
     num_workers: int = 4,
-    use_wrist_cameras: bool = True,
+    use_wrist_cameras: Optional[bool] = None,  # None means auto-detect
     config_overrides: Optional[Dict[str, Any]] = None,
 ):
     """Main training function."""
@@ -307,7 +307,26 @@ def train(
     output_path = pathlib.Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     
-    device = torch.device(device)
+    # Set device and verify CUDA availability
+    # Support formats: "cuda", "cuda:0", "cuda:5", "cpu"
+    if device.startswith("cuda"):
+        if not torch.cuda.is_available():
+            print("Warning: CUDA requested but not available. Falling back to CPU.")
+            device = torch.device("cpu")
+        else:
+            # Parse GPU ID if specified (e.g., "cuda:5" -> device 5)
+            if ":" in device:
+                gpu_id = int(device.split(":")[1])
+                device = torch.device(f"cuda:{gpu_id}")
+                print(f"Using GPU {gpu_id}: {torch.cuda.get_device_name(gpu_id)}")
+            else:
+                device = torch.device("cuda")
+                print(f"Using GPU 0: {torch.cuda.get_device_name(0)}")
+            print(f"CUDA version: {torch.version.cuda}")
+            # Set the default CUDA device for this process
+            torch.cuda.set_device(device.index if device.index is not None else 0)
+    else:
+        device = torch.device(device)
     
     # Find all .npz files
     npz_files = list(dataset_path.glob("episode_*.npz"))
@@ -323,11 +342,40 @@ def train(
     print(f"State dimension: {state_dim}")
     print(f"Action dimension: {action_dim}")
     
-    # Check if wrist cameras are available
+    # Auto-detect task type and wrist camera usage
+    # Single-arm tasks (lift, stack): state_dim=6, action_dim=6
+    # Dual-arm tasks (sort): state_dim=12, action_dim=12
+    is_single_arm = (state_dim == 6 and action_dim == 6)
+    
+    # Auto-detect wrist camera usage if not explicitly set
+    if use_wrist_cameras is None:
+        # Check task name from dataset_dir or output_dir
+        task_name = dataset_path.name.lower()
+        if "lift" in task_name or "stack" in task_name:
+            # Single-arm tasks: use right_wrist camera only
+            use_wrist_cameras = True
+            print(f"Auto-detected single-arm task ({task_name}). Using front + right_wrist cameras.")
+        elif "sort" in task_name:
+            # Dual-arm tasks: use both left_wrist and right_wrist cameras
+            use_wrist_cameras = True
+            print(f"Auto-detected dual-arm task ({task_name}). Using front + left_wrist + right_wrist cameras.")
+        else:
+            # Default: use wrist cameras if available
+            use_wrist_cameras = True
+            print("Task type unclear. Using wrist cameras if available.")
+    
+    # Check if wrist cameras are available in data
     has_left_wrist = "observation_images_left_wrist" in sample_data
     has_right_wrist = "observation_images_right_wrist" in sample_data
+    
+    # For single-arm tasks, we use right_wrist camera only
+    if is_single_arm and use_wrist_cameras:
+        print("Single-arm task: Using front + right_wrist cameras.")
+    
     if use_wrist_cameras:
         print(f"Wrist cameras: left={has_left_wrist}, right={has_right_wrist}")
+    else:
+        print("Wrist cameras: disabled (using front camera only)")
     
     # Build input_features dict
     # PolicyFeature requires type and shape
@@ -339,10 +387,36 @@ def train(
     
     # Add wrist cameras if available and requested
     if use_wrist_cameras:
-        if has_left_wrist:
-            input_features["observation.images.left_wrist"] = PolicyFeature(type=FeatureType.VISUAL, shape=(3, 480, 640))
-        if has_right_wrist:
-            input_features["observation.images.right_wrist"] = PolicyFeature(type=FeatureType.VISUAL, shape=(3, 480, 640))
+        if is_single_arm:
+            # Single-arm tasks (lift, stack): use right_wrist only
+            if has_right_wrist:
+                right_wrist_sample = sample_data["observation_images_right_wrist"][0]
+                is_meaningful = np.any(right_wrist_sample > 0)  # Check if not all zeros
+                if is_meaningful:
+                    input_features["observation.images.right_wrist"] = PolicyFeature(type=FeatureType.VISUAL, shape=(3, 480, 640))
+                    print("  Added right_wrist camera for single-arm task.")
+                else:
+                    print("  Warning: Right wrist camera data appears to be placeholder (all zeros). Skipping.")
+            else:
+                print("  Warning: Right wrist camera data not found in dataset.")
+        else:
+            # Dual-arm tasks (sort): use both left_wrist and right_wrist
+            if has_left_wrist:
+                left_wrist_sample = sample_data["observation_images_left_wrist"][0]
+                is_meaningful = np.any(left_wrist_sample > 0)
+                if is_meaningful:
+                    input_features["observation.images.left_wrist"] = PolicyFeature(type=FeatureType.VISUAL, shape=(3, 480, 640))
+                    print("  Added left_wrist camera for dual-arm task.")
+                else:
+                    print("  Warning: Left wrist camera data appears to be placeholder (all zeros). Skipping.")
+            if has_right_wrist:
+                right_wrist_sample = sample_data["observation_images_right_wrist"][0]
+                is_meaningful = np.any(right_wrist_sample > 0)
+                if is_meaningful:
+                    input_features["observation.images.right_wrist"] = PolicyFeature(type=FeatureType.VISUAL, shape=(3, 480, 640))
+                    print("  Added right_wrist camera for dual-arm task.")
+                else:
+                    print("  Warning: Right wrist camera data appears to be placeholder (all zeros). Skipping.")
     
     # Build output_features dict
     output_features = {
@@ -357,11 +431,11 @@ def train(
     }
     # Add image features - use MEAN_STD (ImageNet default)
     normalization_mapping["observation.images.front"] = NormalizationMode.MEAN_STD
-    if use_wrist_cameras:
-        if has_left_wrist:
-            normalization_mapping["observation.images.left_wrist"] = NormalizationMode.MEAN_STD
-        if has_right_wrist:
-            normalization_mapping["observation.images.right_wrist"] = NormalizationMode.MEAN_STD
+    # Only add normalization for wrist cameras that are actually in input_features
+    if "observation.images.left_wrist" in input_features:
+        normalization_mapping["observation.images.left_wrist"] = NormalizationMode.MEAN_STD
+    if "observation.images.right_wrist" in input_features:
+        normalization_mapping["observation.images.right_wrist"] = NormalizationMode.MEAN_STD
     
     # Default model config
     # Note: input_features and output_features specify the observation and action structure
@@ -403,24 +477,42 @@ def train(
     horizon = model_config.get("horizon", 16)
     n_obs_steps = model_config.get("n_obs_steps", 1)
     
+    # Determine actual wrist camera usage based on input_features
+    # Only use wrist cameras if they're actually in input_features (not filtered out)
+    actual_use_wrist_cameras = ("observation.images.left_wrist" in input_features or 
+                                "observation.images.right_wrist" in input_features)
+    
     # Create dataset and dataloader (need horizon and n_obs_steps)
-    dataset = NPZDataset(npz_files, use_wrist_cameras=use_wrist_cameras, horizon=horizon, n_obs_steps=n_obs_steps)
+    # Use actual_use_wrist_cameras to avoid loading unnecessary data
+    dataset = NPZDataset(npz_files, use_wrist_cameras=actual_use_wrist_cameras, horizon=horizon, n_obs_steps=n_obs_steps)
+    # Use pin_memory only if using CUDA
+    pin_memory = (device.type == "cuda")
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=pin_memory,
         collate_fn=collate_fn,
+        persistent_workers=True if num_workers > 0 else False,
     )
     
     # Compute dataset statistics for normalization
     print("Computing dataset statistics...")
-    dataset_stats = compute_dataset_stats(npz_files, use_wrist_cameras=use_wrist_cameras)
+    dataset_stats = compute_dataset_stats(npz_files, use_wrist_cameras=actual_use_wrist_cameras)
     
     print("Creating model...")
     model = create_model(model_config, device, dataset_stats=dataset_stats)
     model.train()
+    
+    # Verify model is on the correct device
+    if device.type == "cuda":
+        model_device = next(model.parameters()).device
+        if model_device.type != "cuda":
+            print(f"Warning: Model is on {model_device}, but expected cuda!")
+        else:
+            gpu_id = model_device.index if model_device.index is not None else 0
+            print(f"Model is on GPU {gpu_id}: {torch.cuda.get_device_name(gpu_id)}")
     
     # Count parameters
     num_params = sum(p.numel() for p in model.parameters())
@@ -447,6 +539,14 @@ def train(
     print(f"  Batch size: {batch_size}")
     print(f"  Learning rate: {learning_rate}")
     print(f"  Save frequency: every {save_freq} epochs")
+    print(f"  Using wrist cameras: {actual_use_wrist_cameras}")
+    if actual_use_wrist_cameras:
+        wrist_cameras_used = []
+        if "observation.images.left_wrist" in input_features:
+            wrist_cameras_used.append("left_wrist")
+        if "observation.images.right_wrist" in input_features:
+            wrist_cameras_used.append("right_wrist")
+        print(f"    Wrist cameras in model: {', '.join(wrist_cameras_used) if wrist_cameras_used else 'none'}")
     print()
     
     # Training loop
@@ -461,11 +561,15 @@ def train(
         for batch in pbar:
             optimizer.zero_grad()
             
-            loss = train_step(model, batch, device, use_wrist_cameras=use_wrist_cameras)
+            loss = train_step(model, batch, device, use_wrist_cameras=actual_use_wrist_cameras)
             
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
+            
+            # Sync GPU if using CUDA to ensure GPU is actually working
+            if device.type == "cuda":
+                torch.cuda.synchronize()
             
             loss_val = loss.item()
             epoch_losses.append(loss_val)
@@ -583,7 +687,7 @@ def parse_args():
         "--device",
         type=str,
         default="cuda",
-        help="Device (cuda or cpu)"
+        help="Device (cuda, cuda:0, cuda:5, cpu). Use cuda:N to specify GPU ID."
     )
     parser.add_argument(
         "--save-freq",
@@ -594,13 +698,18 @@ def parse_args():
     parser.add_argument(
         "--num-workers",
         type=int,
-        default=4,
-        help="Number of data loading workers"
+        default=8,
+        help="Number of data loading workers (increase for faster data loading)"
     )
     parser.add_argument(
         "--no-wrist-cameras",
         action="store_true",
-        help="Don't use wrist cameras (only front camera)"
+        help="Don't use wrist cameras (only front camera). For single-arm tasks (lift, stack), this is recommended."
+    )
+    parser.add_argument(
+        "--use-wrist-cameras",
+        action="store_true",
+        help="Force use wrist cameras even for single-arm tasks (not recommended)"
     )
     return parser.parse_args()
 
@@ -617,7 +726,7 @@ def main():
         device=args.device,
         save_freq=args.save_freq,
         num_workers=args.num_workers,
-        use_wrist_cameras=not args.no_wrist_cameras,
+        use_wrist_cameras=False if args.no_wrist_cameras else (True if args.use_wrist_cameras else None),
     )
 
 

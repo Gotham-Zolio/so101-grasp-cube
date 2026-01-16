@@ -32,6 +32,27 @@ class LiftCubeSO101Env(PickCubeSO101Env):
         self.robot_init_qpos_noise = robot_init_qpos_noise
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
     
+    @property
+    def _default_sensor_configs(self):
+        """Configure cameras for LeRobot Dataset format.
+        - Front camera: 480×640, third-person view
+        - Wrist camera: 480×640, attached to right arm's camera_link (defined in SO101 agent class)
+        """
+        configs = []
+        
+        # Front camera: third-person view, 480×640 resolution
+        front_pose = sapien_utils.look_at(
+            eye=self.sensor_cam_eye_pos, target=self.sensor_cam_target_pos
+        )
+        configs.append(CameraConfig("front", front_pose, 640, 480, np.deg2rad(50), 0.01, 100))
+        
+        # Note: Wrist camera is defined in SO101 agent's _sensor_configs property
+        # It will be automatically attached to camera_link and named "wrist_camera"
+        # We'll map it to "right_wrist" in data collection
+        
+        return configs
+    
+    
     def _load_agent(self, options: dict):
         """Load single arm (right arm only) at y = -0.15."""
         # Call BaseEnv._load_agent directly with initial_agent_poses

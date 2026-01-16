@@ -38,20 +38,23 @@ class StackCubeSO101Env(BaseEnv):
     @property
     def _default_sensor_configs(self):
         """Configure cameras for LeRobot Dataset format.
-        - Front camera: 480×640, third-person view (matches real-world front camera)
-        - Wrist cameras: Will be added via robot link attachment (requires robot URDF modification)
+        - Front camera: 480×640, third-person view
+        - Wrist camera: 480×640, attached to right arm's camera_link (defined in SO101 agent class)
         """
         configs = []
         
         # Front camera: third-person view, 480×640 resolution
-        # Using intrinsic parameters from PDF: fx=fy=570, approximate vfov ≈ 50° (0.873 rad)
         front_pose = sapien_utils.look_at(
             eye=self.sensor_cam_eye_pos, target=self.sensor_cam_target_pos
         )
-        # CameraConfig: name, pose, width, height, fov (vertical), near, far
         configs.append(CameraConfig("front", front_pose, 640, 480, np.deg2rad(50), 0.01, 100))
         
+        # Note: Wrist camera is defined in SO101 agent's _sensor_configs property
+        # It will be automatically attached to camera_link and named "wrist_camera"
+        # We'll map it to "right_wrist" in data collection
+        
         return configs
+    
 
     @property
     def _default_human_render_camera_configs(self):

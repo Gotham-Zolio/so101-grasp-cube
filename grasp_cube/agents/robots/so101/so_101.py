@@ -13,6 +13,8 @@ from mani_skill.agents.registration import register_agent
 from mani_skill.utils import common
 from mani_skill.utils.structs.actor import Actor
 from mani_skill.utils.structs.pose import Pose
+from mani_skill.sensors.camera import CameraConfig
+import numpy as np
 
 from grasp_cube import PACKAGE_PATH
 
@@ -81,6 +83,26 @@ class SO101(BaseAgent):
         self.finger2_link = self.robot.links_map["moving_jaw_so101_v1_link"]
         self.finger1_tip = self.robot.links_map["gripper_link_tip"]
         self.finger2_tip = self.robot.links_map["moving_jaw_so101_v1_link_tip"]
+    
+    @property
+    def _sensor_configs(self):
+        """Define wrist camera attached to camera_link."""
+        configs = []
+        # Wrist camera attached to camera_link (if available)
+        if hasattr(self, 'robot') and 'camera_link' in self.robot.links_map:
+            camera_link = self.robot.links_map['camera_link']
+            # Use identity pose since camera_link already has correct transform in URDF
+            configs.append(CameraConfig(
+                uid="wrist_camera",
+                pose=sapien.Pose(),  # Identity pose
+                width=640,
+                height=480,
+                fov=np.deg2rad(50),
+                near=0.01,
+                far=100,
+                mount=camera_link
+            ))
+        return configs
 
     @property
     def tcp_pos(self):

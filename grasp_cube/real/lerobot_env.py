@@ -19,6 +19,8 @@ from lerobot.teleoperators import so101_leader, bi_so101_leader
 from lerobot.utils.constants import ACTION
 from lerobot.utils.robot_utils import busy_wait
 
+import cv2
+
 @dataclasses.dataclass
 class LeRobotEnvConfig:
     robot: so101_follower.SO101FollowerConfig | bi_so101_follower.BiSO101FollowerConfig
@@ -28,6 +30,8 @@ class LeRobotEnvConfig:
     dry_run: bool = False
     episode_time_s: float = 600.0
     fps: int = 30
+    # Expected image resolution (H, W)
+    image_resolution: tuple[int, int] = (480, 640)
     
     def __post_init__(self):
         camera_config = json.loads(self.camera_config_path.read_text())
@@ -55,6 +59,9 @@ class LeRobotEnv(gym.Env):
         self.episode_time_s = config.episode_time_s
         self.fps = config.fps
         self.task = config.task
+        self.image_resolution = config.image_resolution
+        target_h, target_w = self.image_resolution
+        
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(self.action_dim,), dtype=np.float32)
         self.observation_space = gym.spaces.Dict({
             "states": gym.spaces.Dict({
@@ -64,12 +71,12 @@ class LeRobotEnv(gym.Env):
                 "right_arm": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32),
             }),
             "images": gym.spaces.Dict({
-                "front": gym.spaces.Box(low=0, high=255, shape=(480, 640, 3), dtype=np.uint8),
-                "wrist": gym.spaces.Box(low=0, high=255, shape=(480, 640, 3), dtype=np.uint8),
+                "front": gym.spaces.Box(low=0, high=255, shape=(target_h, target_w, 3), dtype=np.uint8),
+                "wrist": gym.spaces.Box(low=0, high=255, shape=(target_h, target_w, 3), dtype=np.uint8),
             }) if self.robot.robot_type == "so101_follower" else gym.spaces.Dict({
-                "front": gym.spaces.Box(low=0, high=255, shape=(480, 640, 3), dtype=np.uint8),
-                "left_wrist": gym.spaces.Box(low=0, high=255, shape=(480, 640, 3), dtype=np.uint8),
-                "right_wrist": gym.spaces.Box(low=0, high=255, shape=(480, 640, 3), dtype=np.uint8),
+                "front": gym.spaces.Box(low=0, high=255, shape=(target_h, target_w, 3), dtype=np.uint8),
+                "left_wrist": gym.spaces.Box(low=0, high=255, shape=(target_h, target_w, 3), dtype=np.uint8),
+                "right_wrist": gym.spaces.Box(low=0, high=255, shape=(target_h, target_w, 3), dtype=np.uint8),
             }),
             "task": gym.spaces.Text(max_length=100, charset="1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ \n!@#$%^&*()-_=+[]{}|;:'\",.<>?/`~"),
         })
@@ -77,6 +84,38 @@ class LeRobotEnv(gym.Env):
     @property
     def action_dim(self) -> int:
         return len(self.robot.action_features)
+
+    def _resize_and_crop(self, img: np.ndarray) -> np.ndarray:
+        """
+        Resize and crop image to match target resolution.
+        Ensures input to the policy is always consistent regardless of camera hardware.
+        """
+        target_h, target_w = self.image_resolution
+        h, w = img.shape[:2]
+        
+        if h == target_h and w == target_w:
+            return img
+            
+        # 1. Center Crop to match Aspect Ratio
+        target_aspect = target_w / target_h
+        current_aspect = w / h
+        
+        if current_aspect > target_aspect:
+            # Too wide, crop width
+            new_w = int(h * target_aspect)
+            start_w = (w - new_w) // 2
+            img = img[:, start_w:start_w+new_w]
+        elif current_aspect < target_aspect:
+            # Too tall, crop height
+            new_h = int(w / target_aspect)
+            start_h = (h - new_h) // 2
+            img = img[start_h:start_h+new_h, :]
+            
+        # 2. Resize to exact target dimensions
+        if img.shape[0] != target_h or img.shape[1] != target_w:
+            img = cv2.resize(img, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
+            
+        return img
         
     def prepare_observation(self, obs_processed: dict[str, Any]) -> dict[str, Any]:
         obs = {"images": {}, "states": {}, "task": self.task}
@@ -95,6 +134,9 @@ class LeRobotEnv(gym.Env):
                         obs["states"]["arm"] = []
                     obs["states"]["arm"].append(value)
             else:
+                # Assume value is an image, apply resize/crop
+                if isinstance(value, np.ndarray) and value.ndim == 3:
+                     value = self._resize_and_crop(value)
                 obs["images"][key] = value
         for arm_key in obs["states"].keys():
             obs["states"][arm_key] = np.array(obs["states"][arm_key], dtype=np.float32).flatten()

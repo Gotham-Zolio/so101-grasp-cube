@@ -37,19 +37,41 @@ class SortCubeSO101Env(BaseEnv):
     @property
     def _default_sensor_configs(self):
         """Configure cameras for LeRobot Dataset format.
-        - Front camera: 480×640, third-person view (matches real-world front camera)
+        - Front camera: 480×640, third-person view
+        - Wrist cameras: 480×640, attached to each arm's camera_link
         """
         configs = []
         
         # Front camera: third-person view, 480×640 resolution
-        # Using intrinsic parameters from PDF: fx=fy=570, approximate vfov ≈ 50° (0.873 rad)
         front_pose = sapien_utils.look_at(
             eye=self.sensor_cam_eye_pos, target=self.sensor_cam_target_pos
         )
-        # CameraConfig: name, pose, width, height, fov (vertical), near, far
         configs.append(CameraConfig("front", front_pose, 640, 480, np.deg2rad(50), 0.01, 100))
         
+        # Wrist cameras for dual-arm setup
+        # Note: We'll set the mount in _load_agent after agents are loaded
+        # For now, create configs without mount - they'll be updated in _load_agent
+        configs.append(CameraConfig(
+            uid="left_wrist",
+            pose=sapien.Pose(),  # Identity pose - will be mounted to camera_link
+            width=640,
+            height=480,
+            fov=np.deg2rad(50),
+            near=0.01,
+            far=100,
+        ))
+        configs.append(CameraConfig(
+            uid="right_wrist",
+            pose=sapien.Pose(),  # Identity pose - will be mounted to camera_link
+            width=640,
+            height=480,
+            fov=np.deg2rad(50),
+            near=0.01,
+            far=100,
+        ))
+        
         return configs
+    
 
     @property
     def _default_human_render_camera_configs(self):
@@ -61,6 +83,24 @@ class SortCubeSO101Env(BaseEnv):
             sapien.Pose(p=[-0.635, 0.15, 0]), 
             sapien.Pose(p=[-0.635, -0.15, 0])
         ])
+        
+        # Mount wrist cameras to agent camera_links after agents are loaded
+        # agents[0] is left arm, agents[1] is right arm
+        if hasattr(self, 'agent') and hasattr(self.agent, 'agents'):
+            if len(self.agent.agents) >= 2:
+                # Left wrist camera (agent 0)
+                left_agent = self.agent.agents[0]
+                if hasattr(left_agent, 'robot') and 'camera_link' in left_agent.robot.links_map:
+                    left_camera_link = left_agent.robot.links_map['camera_link']
+                    if hasattr(self, '_sensors') and 'left_wrist' in self._sensors:
+                        self._sensors['left_wrist'].mount = left_camera_link
+                
+                # Right wrist camera (agent 1)
+                right_agent = self.agent.agents[1]
+                if hasattr(right_agent, 'robot') and 'camera_link' in right_agent.robot.links_map:
+                    right_camera_link = right_agent.robot.links_map['camera_link']
+                    if hasattr(self, '_sensors') and 'right_wrist' in self._sensors:
+                        self._sensors['right_wrist'].mount = right_camera_link
 
     
 

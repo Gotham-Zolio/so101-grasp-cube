@@ -153,15 +153,63 @@ def get_camera_images(env, apply_distortion_to_front: bool = True) -> Dict[str, 
         # This is a placeholder - actual implementation may vary
         images['front'] = np.zeros((480, 640, 3), dtype=np.uint8)
     
-    # Get wrist camera images
-    # For now, use placeholder - will need to implement actual wrist camera rendering
-    if hasattr(env_unwrapped.agent, "agents"):
-        # Dual-arm: left_wrist and right_wrist
+    # Get wrist camera images from sensors
+    # Note: Wrist cameras are defined in SO101 agent class as "wrist_camera"
+    # For dual-arm tasks, each agent has its own "wrist_camera"
+    # We need to map them to "left_wrist" and "right_wrist" based on agent index
+    if hasattr(env_unwrapped, 'sensors'):
+        # Check if we have multiple agents (dual-arm) or single agent (single-arm)
+        if hasattr(env_unwrapped, 'agent') and hasattr(env_unwrapped.agent, 'agents'):
+            # Dual-arm setup: agents[0] is left, agents[1] is right
+            # Each agent has its own wrist_camera sensor
+            # For now, we'll try to get from sensors dict directly
+            # The sensor name might be prefixed with agent index
+            left_wrist_img = None
+            right_wrist_img = None
+            
+            # Try different possible sensor names
+            for sensor_name in env_unwrapped.sensors.keys():
+                if 'wrist' in sensor_name.lower() or 'camera' in sensor_name.lower():
+                    if 'left' in sensor_name.lower() or sensor_name.endswith('_0') or sensor_name.startswith('0_'):
+                        left_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
+                    elif 'right' in sensor_name.lower() or sensor_name.endswith('_1') or sensor_name.startswith('1_'):
+                        right_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
+                    elif left_wrist_img is None:
+                        # First wrist camera found, assume it's left (for dual-arm)
+                        left_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
+                    elif right_wrist_img is None:
+                        # Second wrist camera found, assume it's right
+                        right_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
+            
+            images['left_wrist'] = left_wrist_img if left_wrist_img is not None else np.zeros((480, 640, 3), dtype=np.uint8)
+            images['right_wrist'] = right_wrist_img if right_wrist_img is not None else np.zeros((480, 640, 3), dtype=np.uint8)
+        else:
+            # Single-arm setup: only right_wrist camera
+            right_wrist_img = None
+            for sensor_name in env_unwrapped.sensors.keys():
+                if 'wrist' in sensor_name.lower() or 'camera' in sensor_name.lower():
+                    right_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
+                    break
+            
+            images['left_wrist'] = np.zeros((480, 640, 3), dtype=np.uint8)
+            images['right_wrist'] = right_wrist_img if right_wrist_img is not None else np.zeros((480, 640, 3), dtype=np.uint8)
+    else:
+        # Fallback: use placeholders if sensors not available
         images['left_wrist'] = np.zeros((480, 640, 3), dtype=np.uint8)
         images['right_wrist'] = np.zeros((480, 640, 3), dtype=np.uint8)
-    else:
-        # Single-arm: wrist
-        images['wrist'] = np.zeros((480, 640, 3), dtype=np.uint8)
+
+
+def _get_image_from_sensor(sensor):
+    """Helper function to get image from sensor and convert to uint8 RGB."""
+    img = sensor.take_picture()
+    if img.shape[-1] == 4:
+        img = img[..., :3]
+    if img.dtype != np.uint8:
+        if img.max() <= 1.0:
+            img = (img * 255).astype(np.uint8)
+        else:
+            img = img.astype(np.uint8)
+    return img
     
     return images
 
@@ -201,8 +249,6 @@ class DataCollectionWrapper:
             data_point["observation.images.left_wrist"] = obs_before["left_wrist"]
         if "right_wrist" in obs_before:
             data_point["observation.images.right_wrist"] = obs_before["right_wrist"]
-        elif "wrist" in obs_before:
-            data_point["observation.images.wrist"] = obs_before["wrist"]
         
         self.episode_data.append(data_point)
         self.current_step += 1
@@ -243,10 +289,16 @@ def main():
         sensor_configs=dict(shader_pack=args.shader),
         sim_backend="auto"
     )
-    env = FlattenActionSpaceWrapper(env)
+    # Only wrap with FlattenActionSpaceWrapper if action space is Dict (multi-agent)
+    # Single-arm environments have Box action space which doesn't need flattening
+    from gymnasium.spaces import Dict
+    if isinstance(env.action_space, Dict):
+        env = FlattenActionSpaceWrapper(env)
     
     # Wrap with RecordEpisode to record trajectories
     # This will save trajectories in ManiSkill format
+    # IMPORTANT: RecordEpisode should automatically save get_obs() data when obs_mode="rgb"
+    # But we need to ensure obs_mode is set correctly and sensors are available
     env = RecordEpisode(
         env,
         output_dir=str(traj_output_dir),
@@ -258,6 +310,26 @@ def main():
         record_reward=False,
         save_on_reset=False
     )
+    
+    # Debug: Verify environment has sensors configured
+    env_unwrapped = env.unwrapped
+    print(f"Environment obs_mode: {getattr(env_unwrapped, 'obs_mode', 'unknown')}")
+    print(f"Environment has sensors attribute: {hasattr(env_unwrapped, 'sensors')}")
+    if hasattr(env_unwrapped, 'sensors'):
+        print(f"Available sensors: {list(env_unwrapped.sensors.keys()) if isinstance(env_unwrapped.sensors, dict) else 'not a dict'}")
+    
+    # Test: Get one observation to verify sensor_data is available
+    test_obs, _ = env.reset(seed=42)
+    test_obs_dict = env.get_obs()
+    print(f"Test obs_dict keys: {list(test_obs_dict.keys())}")
+    if "sensor_data" in test_obs_dict:
+        print(f"✓ sensor_data is available in get_obs()")
+        if isinstance(test_obs_dict["sensor_data"], dict):
+            print(f"  sensor_data keys: {list(test_obs_dict['sensor_data'].keys())}")
+    else:
+        print(f"⚠️  WARNING: sensor_data NOT in get_obs()!")
+        print(f"  This means RecordEpisode will NOT save images!")
+        print(f"  Check environment configuration (obs_mode='rgb' should include sensor_data)")
     
     # Get solution function
     solution_func = MP_SOLUTIONS[args.env_id]
