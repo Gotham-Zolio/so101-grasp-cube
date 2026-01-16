@@ -159,27 +159,36 @@ class ParquetRealDataset(Dataset):
         state_tensor = torch.stack([torch.from_numpy(s).float() for s in obs_dict['state']])
         # Keep shape (n_obs_steps, 6) - LeRobot expects time dimension to be present
         
-        # 加载图像（如果可用）
+        # 加载图像序列（对应观测窗口的所有帧）
         batch = {
             "observation.state": state_tensor,
             "action": action_sequence,
             "action_is_pad": action_is_pad,
         }
 
-        # Always attach an image key so the policy never sees missing images
-        image_tensor = None
+        # Load images for all observation steps (same range as states: obs_start to obs_end)
+        images = []
         if self.load_images and self.video_loader is not None:
-            try:
-                image = self.video_loader.get_frame(start_frame)
-                if image is not None:
-                    image_tensor = torch.from_numpy(image).float()
-            except Exception as e:
-                print(f"Warning: Failed to load image for frame {start_frame}: {e}")
-
-        if image_tensor is None:
-            # Fallback to zero image if loading is disabled or failed
-            image_tensor = torch.zeros((3, 480, 640), dtype=torch.float32)
-
+            for frame_idx in range(obs_start, obs_end):
+                try:
+                    image = self.video_loader.get_frame(frame_idx)
+                    if image is not None:
+                        images.append(torch.from_numpy(image).float())
+                    else:
+                        images.append(torch.zeros((3, 480, 640), dtype=torch.float32))
+                except Exception as e:
+                    print(f"Warning: Failed to load image for frame {frame_idx}: {e}")
+                    images.append(torch.zeros((3, 480, 640), dtype=torch.float32))
+        
+        # Pad image sequence if needed
+        while len(images) < self.n_obs_steps:
+            if images:
+                images.insert(0, images[0].clone())  # Repeat first image
+            else:
+                images.insert(0, torch.zeros((3, 480, 640), dtype=torch.float32))
+        
+        # Stack images to shape (n_obs_steps, 3, H, W)
+        image_tensor = torch.stack(images)
         batch["observation.images.front"] = image_tensor
         
         return batch
@@ -380,6 +389,11 @@ class DiffusionPolicyWrapper(torch.nn.Module):
     def eval(self):
         self.policy.eval()
         return self
+    
+    def save_pretrained(self, path: str):
+        """Save the underlying policy model"""
+        self.policy.save_pretrained(path)
+
 
 
 def train(
