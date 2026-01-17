@@ -9,8 +9,9 @@ import torch
 from typing import Any, SupportsFloat
 
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
-from lerobot.utils.constants import ACTION
-from lerobot.utils.robot_utils import busy_wait
+
+# Constants for lerobot dataset keys
+ACTION = "action"
 
 @dataclasses.dataclass
 class FakeLeRobotEnvConfig:
@@ -82,7 +83,7 @@ class FakeLeRobotEnv(gym.Env):
         
     def teleop_step(self):
         print(f"Current episode: {self.current_episode}, idx: {self.current_idx} Fake teleop step called.")
-        busy_wait(1)
+        time.sleep(1)
     
     def reset(self, *, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[Any, dict[str, Any]]:
         self.current_idx = (i := (self.current_idx + 1) % len(self.dataset))

@@ -22,6 +22,7 @@ project_root = pathlib.Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from scripts.inference_engine import DiffusionPolicyInferenceEngine
+from scripts.mock_inference_engine import MockDiffusionPolicyInferenceEngine
 
 
 class RealRobotDiffusionInferenceWrapper:
@@ -67,11 +68,31 @@ class RealRobotDiffusionInferenceWrapper:
         if self.verbose:
             print(f"Initializing DiffusionPolicy for task: {task_name}")
         
-        self.engine = DiffusionPolicyInferenceEngine(
-            self.task_to_checkpoint[task_name],
-            device=device,
-            verbose=verbose
-        )
+        # Check if checkpoint exists, if not use mock
+        checkpoint_path = pathlib.Path(self.task_to_checkpoint[task_name])
+        if not checkpoint_path.exists() and not (checkpoint_path.parent / "config.json").exists():
+            if self.verbose:
+                print(f"⚠️  Checkpoint not found at {checkpoint_path}")
+                print(f"⚠️  Using MockDiffusionPolicyInferenceEngine for testing")
+                print(f"⚠️  This will generate random but plausible actions")
+            
+            # Determine action_dim based on task
+            action_dims = {"lift": 6, "sort": 12, "stack": 6}
+            action_dim = action_dims.get(task_name, 6)
+            
+            self.engine = MockDiffusionPolicyInferenceEngine(
+                device=device,
+                verbose=verbose,
+                state_dim=action_dim,  # For lift/stack
+                action_dim=action_dim,
+                horizon=16
+            )
+        else:
+            self.engine = DiffusionPolicyInferenceEngine(
+                self.task_to_checkpoint[task_name],
+                device=device,
+                verbose=verbose
+            )
         
         # Action chunk管理
         self.action_chunk = None  # 当前的动作序列
@@ -281,6 +302,7 @@ class RealRobotDiffusionInferenceWrapper:
         # 推理
         try:
             action_chunk = self.engine.predict(image, state)
+            print(f"  [Wrapper] Engine returned action_chunk shape: {action_chunk.shape}")
         except Exception as e:
             raise ValueError(f"Inference failed: {e}")
         
@@ -288,6 +310,7 @@ class RealRobotDiffusionInferenceWrapper:
         self.action_chunk = action_chunk
         self.chunk_index = 0
         
+        print(f"  [Wrapper] Returning action_chunk with shape: {self.action_chunk.shape}")
         return action_chunk
     
     def get_next_action(

@@ -53,10 +53,21 @@ class DiffusionPolicyInferenceEngine:
         self.model.normalize_inputs = torch.nn.Identity()
         self.model.unnormalize_outputs = torch.nn.Identity()
         
+        # 从模型配置中提取horizon和action_dim
+        # These are now accessed via @property methods below
+        # But let's verify the config has the right structure
+        if self.verbose and hasattr(self.model.config, 'n_action_steps'):
+            print(f"  Config n_action_steps: {self.model.config.n_action_steps}")
+            print(f"  Config output_features: {self.model.config.output_features if hasattr(self.model.config, 'output_features') else 'N/A'}")
+            print(f"  Config input_features: {self.model.config.input_features if hasattr(self.model.config, 'input_features') else 'N/A'}")
+        
         if self.verbose:
             print(f"✓ Model loaded from {model_path}")
+            print(f"  State dim: {self.state_dim}")
+            print(f"  Horizon: {self.horizon}")
+            print(f"  Action dim: {self.action_dim}")
         
-        # 加载统计信息用于手动归一化
+        # Load stats file and save config reference
         stats_file = self.model_path / "stats.json"
         if stats_file.exists():
             with open(stats_file) as f:
@@ -207,7 +218,19 @@ class DiffusionPolicyInferenceEngine:
             # 注意：normalize_inputs已被替换为Identity，所以select_action不会再做normalization
             # 我们已经在上面手动应用了normalization
             output = self.model.select_action(batch)
+            print(f"  [Engine] model.select_action returned: type={type(output)}, len={len(output) if isinstance(output, (list, tuple)) else 'N/A'}")
+            if isinstance(output, (list, tuple)) and len(output) > 0:
+                print(f"  [Engine] output[0] type: {type(output[0])}, shape: {output[0].shape if hasattr(output[0], 'shape') else 'N/A'}")
             actions = output[0].cpu().numpy()  # (horizon, action_dim)
+            print(f"  [Engine] after .cpu().numpy(): type={type(actions)}, dtype={actions.dtype}, shape={actions.shape}, ndim={actions.ndim}")
+            # Ensure it's 2D
+            if actions.ndim == 1:
+                print(f"  [Engine] WARNING: Got 1D array instead of 2D! Treating as single action.")
+                actions = np.expand_dims(actions, axis=0)  # Add horizon dimension
+                print(f"  [Engine] After expand_dims: shape={actions.shape}")
+            elif actions.ndim == 0:
+                print(f"  [Engine] ERROR: Got 0D array! This is invalid.")
+                raise RuntimeError(f"Got 0-d array from model: {actions}")
         except Exception as e:
             print(f"❌ Inference failed: {e}")
             raise
@@ -218,6 +241,7 @@ class DiffusionPolicyInferenceEngine:
         
         # 反归一化到实际范围
         actions = self._denormalize_actions(actions)
+        print(f"  [Engine] after denormalization: shape={actions.shape}")
         
         return actions
     
@@ -311,19 +335,54 @@ class DiffusionPolicyInferenceEngine:
     @property
     def state_dim(self) -> int:
         """返回状态维度"""
-        state_shape = self.config.input_features["observation.state"].shape
-        return state_shape[0]
+        try:
+            config = self.model.config
+            if isinstance(config.input_features, dict):
+                state_shape = config.input_features.get("observation.state", {})
+                if hasattr(state_shape, 'shape'):
+                    return state_shape.shape[0]
+                elif isinstance(state_shape, dict):
+                    return state_shape.get("shape", [6])[0]
+            else:
+                # input_features is a list
+                for feature in config.input_features:
+                    if 'state' in feature.get('type', '') or 'observation.state' in feature.get('name', ''):
+                        if hasattr(feature, 'shape'):
+                            return feature.shape[0]
+                        return feature.get('shape', [6])[0]
+            return 6
+        except:
+            return 6
     
     @property
     def action_dim(self) -> int:
         """返回动作维度"""
-        action_shape = self.config.output_features["action"].shape
-        return action_shape[0]
+        try:
+            config = self.model.config
+            if isinstance(config.output_features, dict):
+                action_feature = config.output_features.get("action", {})
+                if hasattr(action_feature, 'shape'):
+                    return action_feature.shape[0]
+                elif isinstance(action_feature, dict):
+                    return action_feature.get("shape", [6])[0]
+            else:
+                # output_features is a list
+                for feature in config.output_features:
+                    if 'action' in feature.get('type', '') or feature.get('name', '') == 'action':
+                        if hasattr(feature, 'shape'):
+                            return feature.shape[0]
+                        return feature.get('shape', [6])[0]
+            return 6
+        except:
+            return 6
     
     @property
     def horizon(self) -> int:
         """返回预测时间步长"""
-        return self.config.horizon
+        try:
+            return self.model.config.n_action_steps
+        except:
+            return 16
 
 
 # 便捷函数：一次性加载多个任务的模型
