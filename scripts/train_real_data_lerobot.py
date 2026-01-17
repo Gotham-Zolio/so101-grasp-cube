@@ -65,6 +65,16 @@ class ParquetRealDataset(Dataset):
         self.df = pd.concat(self.data, ignore_index=True)
         print(f"Total frames: {len(self.df)}")
         
+        # 自动检测状态维度
+        sample_state = self._extract_state(self.df.iloc[0])
+        self.state_dim = len(sample_state)
+        print(f"Detected state dimension: {self.state_dim}")
+        
+        # 自动检测动作维度
+        sample_action = self._extract_action(self.df.iloc[0])
+        self.action_dim = len(sample_action)
+        print(f"Detected action dimension: {self.action_dim}")
+        
         # 初始化 VideoFrameLoader 用于加载视频帧
         self.video_loader = None
         if self.load_images and VIDEO_LOADER_AVAILABLE:
@@ -157,7 +167,7 @@ class ParquetRealDataset(Dataset):
             obs_dict['state'].insert(0, obs_dict['state'][0])
         
         state_tensor = torch.stack([torch.from_numpy(s).float() for s in obs_dict['state']])
-        # Keep shape (n_obs_steps, 6) - LeRobot expects time dimension to be present
+        # Keep shape (n_obs_steps, state_dim) - LeRobot expects time dimension
         
         # 加载图像序列（对应观测窗口的所有帧）
         batch = {
@@ -196,9 +206,12 @@ class ParquetRealDataset(Dataset):
     def _extract_action(self, row) -> np.ndarray:
         """从行数据中提取动作"""
         if 'action' in row:
-            return np.array(row['action'], dtype=np.float32)
-        # 如果没有 action 列，尝试从 observation 构造
-        return np.zeros(6, dtype=np.float32)
+            action = row['action']
+            if isinstance(action, np.ndarray):
+                return action.astype(np.float32)
+            return np.array(action, dtype=np.float32)
+        # 返回适当维度的零向量（会在第一次调用后知道维度）
+        return np.zeros(1, dtype=np.float32)
     
     def _extract_state(self, row) -> np.ndarray:
         """从行数据中提取状态（关节角度）"""
@@ -207,8 +220,8 @@ class ParquetRealDataset(Dataset):
             if isinstance(state, np.ndarray):
                 return state.astype(np.float32)
             return np.array(state, dtype=np.float32)
-        # 如果没有状态列，返回零向量
-        return np.zeros(6, dtype=np.float32)
+        # 返回适当维度的零向量（会在第一次调用后知道维度）
+        return np.zeros(1, dtype=np.float32)
     
     def _extract_image(self, row) -> np.ndarray:
         """从行数据中提取图像（RGB，3x480x640）"""
@@ -473,6 +486,7 @@ def train(
     
     # DiffusionConfig with proper features
     # Vision + State policy (images from video files)
+    # Use dynamically detected state/action dimensions from dataset
     policy_config = DiffusionConfig(
         n_obs_steps=1,
         horizon=16,
@@ -483,14 +497,14 @@ def train(
                 type=FeatureType.VISUAL,
             ),
             "observation.state": PolicyFeature(
-                shape=(6,),
+                shape=(dataset.state_dim,),
                 type=FeatureType.STATE,
             ),
         },
         # Output feature: joint actions
         output_features={
             "action": PolicyFeature(
-                shape=(6,),
+                shape=(dataset.action_dim,),
                 type=FeatureType.ACTION,
             ),
         },
