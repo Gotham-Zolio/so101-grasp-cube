@@ -1,13 +1,13 @@
 """
-Evaluate trained Diffusion Policy in simulation.
+Evaluate trained ACT policy in simulation.
 
-This script loads a trained policy and evaluates it on the simulation environment,
+This script loads a trained ACT policy and evaluates it on the simulation environment,
 measuring success rate and other metrics.
 """
 
 import argparse
 import pathlib
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import numpy as np
 import torch
 import gymnasium as gym
@@ -28,16 +28,29 @@ import grasp_cube.envs.tasks.stack_cube_so101
 import grasp_cube.envs.tasks.sort_cube_so101
 
 from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper
-from grasp_cube.policies.eval_policy import DeployablePolicy
+
+# Import data augmentation utilities
+from grasp_cube.utils.data_augmentation import apply_visual_disturbance
+
+# LeRobot imports
+try:
+    from lerobot.configs.policies import PreTrainedConfig
+    from lerobot.policies.act.configuration_act import ACTConfig
+    from lerobot.policies.act.modeling_act import ACTPolicy
+    LEROBOT_AVAILABLE = True
+except ImportError:
+    LEROBOT_AVAILABLE = False
+    print("Error: LeRobot not installed. Please install it: pip install lerobot")
+    exit(1)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Evaluate Diffusion Policy in simulation")
+    parser = argparse.ArgumentParser(description="Evaluate ACT Policy in simulation")
     parser.add_argument(
         "--policy-path",
         type=str,
         required=True,
-        help="Path to trained policy directory"
+        help="Path to trained policy directory (LeRobot output_dir or checkpoint path)"
     )
     parser.add_argument(
         "-e", "--env-id",
@@ -62,13 +75,6 @@ def parse_args():
         type=str,
         default="cuda",
         help="Device for inference (cuda or cpu)"
-    )
-    parser.add_argument(
-        "--robot-type",
-        type=str,
-        default="bi_so101",
-        choices=["so101", "bi_so101"],
-        help="Robot type"
     )
     parser.add_argument(
         "--save-video",
@@ -96,22 +102,220 @@ def parse_args():
         action="store_true",
         help="Print detailed debugging information"
     )
+    parser.add_argument(
+        "--visual-disturbance",
+        action="store_true",
+        help="Apply visual disturbance during evaluation (for generalization testing)"
+    )
+    parser.add_argument(
+        "--brightness-factor",
+        type=float,
+        default=1.0,
+        help="Brightness multiplier for visual disturbance (>1.0 = brighter, <1.0 = darker)"
+    )
+    parser.add_argument(
+        "--contrast-factor",
+        type=float,
+        default=1.0,
+        help="Contrast multiplier for visual disturbance (>1.0 = more contrast, <1.0 = less contrast)"
+    )
+    parser.add_argument(
+        "--noise-std",
+        type=float,
+        default=0.0,
+        help="Standard deviation of Gaussian noise for visual disturbance (0.0 = no noise)"
+    )
     return parser.parse_args()
 
 
-def get_observation_from_env(env, verbose: bool = False) -> Dict[str, Any]:
+def load_policy(policy_path: pathlib.Path, device: str = "cuda"):
+    """Load ACT policy from checkpoint."""
+    policy_path = policy_path.resolve()
+    
+    # Handle LeRobot native training checkpoint structure
+    # LeRobot saves checkpoints as: output_dir/checkpoints/STEP/pretrained_model/
+    # Note: Checkpoint directories use zero-padded names (e.g., "020000", "040000") or "last"
+    if policy_path.is_dir():
+        checkpoints_dir = policy_path / "checkpoints"
+        if checkpoints_dir.exists() and checkpoints_dir.is_dir():
+            # Find the latest checkpoint step
+            # Preserve original directory names to maintain zero-padding (e.g., "020000")
+            checkpoint_dirs = []
+            for item in checkpoints_dir.iterdir():
+                if item.is_dir():
+                    if item.name == "last":
+                        # "last" is a special checkpoint pointing to the latest
+                        checkpoint_dirs.append((float('inf'), item.name))
+                    elif item.name.isdigit():
+                        # Convert to int for comparison, but keep original name for path
+                        checkpoint_dirs.append((int(item.name), item.name))
+            
+            if checkpoint_dirs:
+                # Sort by step number (int) and get the latest
+                checkpoint_dirs.sort(key=lambda x: x[0])
+                latest_step_name = checkpoint_dirs[-1][1]  # Use original name (preserves zero-padding)
+                pretrained_model_dir = checkpoints_dir / latest_step_name / "pretrained_model"
+                if pretrained_model_dir.exists():
+                    print(f"Found LeRobot checkpoint structure. Using latest checkpoint: {pretrained_model_dir}")
+                    policy_path = pretrained_model_dir
+                else:
+                    raise FileNotFoundError(
+                        f"Checkpoint directory found but pretrained_model not found. "
+                        f"Expected: {pretrained_model_dir}"
+                    )
+            else:
+                raise FileNotFoundError(
+                    f"No checkpoint steps found in {checkpoints_dir}. "
+                    f"Expected directories named with step numbers (e.g., 020000, 040000) or 'last'."
+                )
+    
+    if not policy_path.exists():
+        raise FileNotFoundError(f"Policy path does not exist: {policy_path}")
+    
+    # Load policy configuration
+    policy_config = PreTrainedConfig.from_pretrained(
+        str(policy_path),
+        local_files_only=True
+    )
+    
+    if not isinstance(policy_config, ACTConfig):
+        raise ValueError(
+            f"Expected ACTConfig, got {type(policy_config)}. "
+            f"This script only supports ACT policies."
+        )
+    
+    print(f"Loading ACT policy from {policy_path}")
+    print(f"  Policy type: ACT")
+    print(f"  Chunk size: {policy_config.chunk_size}")
+    print(f"  N action steps: {policy_config.n_action_steps}")
+    print(f"  N obs steps: {policy_config.n_obs_steps}")
+    
+    # Load policy model
+    policy = ACTPolicy.from_pretrained(
+        str(policy_path),
+        config=policy_config,
+        local_files_only=True
+    )
+    
+    policy.to(device)
+    policy.eval()
+    
+    # Print input features
+    if hasattr(policy_config, 'input_features'):
+        input_features = getattr(policy_config, 'input_features', None)
+        if input_features is not None and isinstance(input_features, dict):
+            feature_keys = [str(k) for k in input_features.keys()]
+            print(f"  Input features: {feature_keys}")
+    
+    # Check normalization statistics
+    print(f"  Normalization mode: {policy_config.normalization_mapping}")
+    
+    # Verify normalization buffers are loaded (not infinity or all zeros)
+    # This is critical - if stats are infinity or all zeros, normalization won't work correctly
+    normalization_ok = True
+    if hasattr(policy, 'normalize_inputs'):
+        for key in policy_config.input_features.keys():
+            buffer_name = "buffer_" + key.replace(".", "_")
+            if hasattr(policy.normalize_inputs, buffer_name):
+                buffer = getattr(policy.normalize_inputs, buffer_name)
+                if "mean" in buffer and "std" in buffer:
+                    mean = buffer["mean"]
+                    std = buffer["std"]
+                    if torch.isinf(mean).any() or torch.isinf(std).any():
+                        print(f"  ERROR: Normalization stats for {key} are infinity! Model will not work correctly.")
+                        print(f"    This usually means the model was not properly trained or checkpoint is corrupted.")
+                        normalization_ok = False
+                    else:
+                        mean_val = mean.squeeze().cpu().numpy()
+                        std_val = std.squeeze().cpu().numpy()
+                        
+                        # Check if std is all zeros (critical issue for normalization)
+                        if np.allclose(std_val, 0.0):
+                            print(f"  ⚠️  WARNING: Normalization std for {key} is all zeros!")
+                            print(f"    This will cause division by zero during normalization.")
+                            print(f"    Attempting to fix by computing stats from actual state values...")
+                            
+                            # Compute approximate std from typical state ranges
+                            # For joint positions, typical range is roughly [-2, 2] radians
+                            # Use a reasonable std estimate based on typical joint position variance
+                            if key == "observation.state":
+                                # For 6-DOF arm, typical std for joint positions is around 0.5-1.0
+                                # Use a conservative estimate
+                                estimated_std = torch.ones_like(std) * 1.0  # Assume std=1.0 for joint positions
+                                buffer["std"] = estimated_std.to(device)
+                                print(f"    ✓ Fixed: Set std to 1.0 (identity normalization for state)")
+                                print(f"    Note: State normalization will be effectively disabled (x - mean) / 1.0")
+                                print(f"    This is acceptable if state values are already in a reasonable range")
+                            else:
+                                # For other features, use identity normalization
+                                buffer["std"] = torch.ones_like(std).to(device)
+                                print(f"    ✓ Fixed: Set std to 1.0 (identity normalization)")
+                        
+                        # For images, mean/std are per-channel (C, 1, 1)
+                        if key.startswith("observation.images."):
+                            print(f"  Normalization stats for {key}: mean per channel={mean_val.flatten()}, std per channel={std_val.flatten()}")
+                        else:
+                            print(f"  Normalization stats for {key}: mean={mean_val}, std={std_val}")
+                elif "min" in buffer and "max" in buffer:
+                    min_val = buffer["min"]
+                    max_val = buffer["max"]
+                    if torch.isinf(min_val).any() or torch.isinf(max_val).any():
+                        print(f"  ERROR: Normalization stats for {key} are infinity!")
+                        normalization_ok = False
+                    else:
+                        print(f"  Normalization stats for {key}: min={min_val.squeeze().cpu().numpy()}, max={max_val.squeeze().cpu().numpy()}")
+    
+    if not normalization_ok:
+        raise RuntimeError(
+            "Normalization statistics are not properly loaded. "
+            "The model checkpoint may be corrupted or incomplete. "
+            "Please check the checkpoint or retrain the model."
+        )
+    
+    return policy, policy_config
+
+
+def determine_cameras_from_env(env_id: str) -> List[str]:
+    """Determine which cameras to use based on environment ID.
+    
+    All tasks (lift, stack, sort) use the same three cameras: front + left_side + right_side.
+    """
+    return ["front", "left_side", "right_side"]
+
+
+def get_observation_from_env(
+    env, 
+    required_cameras: List[str], 
+    verbose: bool = False,
+    apply_visual_disturbance_flag: bool = False,
+    brightness_factor: float = 1.0,
+    contrast_factor: float = 1.0,
+    noise_std: float = 0.0,
+) -> tuple[Dict[str, Any], Dict[str, np.ndarray]]:
     """
     Get observation in LeRobot format from ManiSkill environment.
+    
+    Args:
+        env: ManiSkill environment
+        required_cameras: List of camera names to extract (e.g., ["front", "left_side", "right_side"])
+        verbose: Print debug information
+        apply_visual_disturbance_flag: Whether to apply visual disturbance
+        brightness_factor: Brightness multiplier for visual disturbance
+        contrast_factor: Contrast multiplier for visual disturbance
+        noise_std: Standard deviation of Gaussian noise for visual disturbance
+    
+    Returns:
+        Tuple of (observation_dict, raw_images_dict):
+        - observation_dict: Dict with "observation.state" and "observation.images.*" keys (for policy)
+        - raw_images_dict: Dict with original images (for video saving)
     """
     env_unwrapped = env.unwrapped
     
     # Ensure scene is updated before taking pictures
-    # This is critical - sensors need the scene to be rendered/updated
     if hasattr(env_unwrapped, 'scene'):
         env_unwrapped.scene.update_render()
     
     # Get robot state (qpos)
-    # Check if it's a multi-agent setup (dual-arm) or single agent
     num_agents = len(env_unwrapped.agent.agents) if hasattr(env_unwrapped.agent, "agents") else 1
     
     if num_agents > 1:
@@ -127,6 +331,7 @@ def get_observation_from_env(env, verbose: bool = False) -> Dict[str, Any]:
         else:
             left_arm = left_arm[:6]
             right_arm = right_arm[:6]
+        state = np.concatenate([left_arm, right_arm], axis=-1)  # (12,)
     else:
         # Single-arm
         qpos = env_unwrapped.agent.agents[0].robot.get_qpos() if hasattr(env_unwrapped.agent, "agents") else env_unwrapped.agent.robot.get_qpos()
@@ -135,364 +340,188 @@ def get_observation_from_env(env, verbose: bool = False) -> Dict[str, Any]:
         if state.ndim > 1:
             state = state[0, :6]
         else:
-            state = state[:6]
+            state = state[:6]  # (6,)
     
-    # Get images from sensors (correct way to get camera images in ManiSkill)
+    # Get images from sensors
     images = {}
+    obs_dict = env.get_obs()
     
-    # Debug: check sensors availability
-    if verbose and not hasattr(get_observation_from_env, "_debug_printed"):
-        print(f"DEBUG: env_unwrapped has sensors: {hasattr(env_unwrapped, 'sensors')}")
-        if hasattr(env_unwrapped, 'sensors'):
-            sensors = env_unwrapped.sensors
-            if isinstance(sensors, dict):
-                print(f"DEBUG: Available sensors: {list(sensors.keys())}")
-            else:
-                print(f"DEBUG: sensors type: {type(sensors)}, value: {sensors}")
-        # Also check obs_dict structure
-        obs_dict = env.get_obs()
-        print(f"DEBUG: obs_dict keys: {list(obs_dict.keys())}")
-        if "sensor_data" in obs_dict:
+    # All tasks use the same three cameras: front + left_side + right_side (fixed pose cameras)
+    for camera_name in required_cameras:
+        camera_img = None
+        
+        # Get camera from environment sensor configs (all cameras are fixed pose, no mounting needed)
+        if hasattr(env_unwrapped, 'sensors') and camera_name in env_unwrapped.sensors:
+            try:
+                camera = env_unwrapped.sensors[camera_name]
+                camera_img = camera.take_picture()
+                if isinstance(camera_img, torch.Tensor):
+                    camera_img = camera_img.cpu().numpy()
+                if camera_img.ndim == 4:
+                    camera_img = camera_img[0]  # Remove batch dimension
+            except Exception as e:
+                if verbose:
+                    print(f"Warning: Failed to get {camera_name} from sensors: {e}")
+        
+        # Fallback: try from sensor_data
+        if camera_img is None and "sensor_data" in obs_dict:
             sensor_data = obs_dict["sensor_data"]
-            print(f"DEBUG: sensor_data type: {type(sensor_data)}")
-            if isinstance(sensor_data, dict):
-                print(f"DEBUG: sensor_data keys: {list(sensor_data.keys())}")
-                if "front" in sensor_data:
-                    front_data = sensor_data["front"]
-                    print(f"DEBUG: front data type: {type(front_data)}")
-                    if isinstance(front_data, dict):
-                        print(f"DEBUG: front data keys: {list(front_data.keys())}")
-        get_observation_from_env._debug_printed = True
-    
-    # Get front camera image from sensors
-    if hasattr(env_unwrapped, 'sensors') and 'front' in env_unwrapped.sensors:
-        try:
-            front_camera = env_unwrapped.sensors['front']
-            front_img = front_camera.take_picture()
-            
-            # Handle batch dimension if present
-            if isinstance(front_img, torch.Tensor):
-                front_img = front_img.cpu().numpy()
-            if front_img.ndim == 4:
-                front_img = front_img[0]  # Remove batch dimension
-            
-            # Convert RGBA to RGB if needed
-            if front_img.shape[-1] == 4:
-                front_img = front_img[..., :3]
-            
-            # Convert to uint8
-            if front_img.dtype != np.uint8:
-                if front_img.max() <= 1.0:
-                    front_img = (front_img * 255).astype(np.uint8)
-                else:
-                    front_img = np.clip(front_img, 0, 255).astype(np.uint8)
-            
-            # Debug: check if image is all black
-            if verbose and not hasattr(get_observation_from_env, "_img_debug_printed"):
-                img_mean = front_img.mean()
-                img_max = front_img.max()
-                print(f"DEBUG: Front camera image - mean: {img_mean:.2f}, max: {img_max}, shape: {front_img.shape}, dtype: {front_img.dtype}")
-                if img_mean < 1.0:
-                    print(f"WARNING: Front camera image appears to be all black (mean={img_mean:.2f})")
-                get_observation_from_env._img_debug_printed = True
-            
-            images["front"] = front_img
-        except Exception as e:
-            if verbose:
-                print(f"WARNING: Failed to get front camera image: {e}")
-                import traceback
-                traceback.print_exc()
-            images["front"] = np.zeros((480, 640, 3), dtype=np.uint8)
-    else:
-        # Fallback: try to get from obs_dict
-        obs_dict = env.get_obs()
-        if verbose and not hasattr(get_observation_from_env, "_obs_debug_printed"):
-            print(f"DEBUG: obs_dict keys: {list(obs_dict.keys())}")
-            if "sensor_data" in obs_dict:
-                print(f"DEBUG: sensor_data type: {type(obs_dict['sensor_data'])}")
-                if isinstance(obs_dict["sensor_data"], dict):
-                    print(f"DEBUG: sensor_data keys: {list(obs_dict['sensor_data'].keys())}")
-            get_observation_from_env._obs_debug_printed = True
+            if isinstance(sensor_data, dict) and camera_name in sensor_data:
+                camera_data = sensor_data[camera_name]
+                if isinstance(camera_data, dict) and "rgb" in camera_data:
+                    camera_img = camera_data["rgb"]
+                elif isinstance(camera_data, (np.ndarray, torch.Tensor)):
+                    camera_img = camera_data
         
-        front_img = None
-        
-        # Try: obs_dict["sensor_data"]["front"]["rgb"] (ManiSkill format)
-        if "sensor_data" in obs_dict:
-            sensor_data = obs_dict["sensor_data"]
-            
-            # Handle different sensor_data structures
-            if isinstance(sensor_data, dict):
-                if "front" in sensor_data:
-                    front_data = sensor_data["front"]
-                    if isinstance(front_data, dict):
-                        if "rgb" in front_data:
-                            front_img = front_data["rgb"]
-                        elif "color" in front_data:
-                            front_img = front_data["color"]
-                    elif isinstance(front_data, (np.ndarray, torch.Tensor)):
-                        front_img = front_data
-                elif verbose and not hasattr(get_observation_from_env, "_sensor_debug_printed"):
-                    print(f"DEBUG: sensor_data keys: {list(sensor_data.keys())}")
-                    get_observation_from_env._sensor_debug_printed = True
-            elif isinstance(sensor_data, (np.ndarray, torch.Tensor)):
-                # sensor_data might be directly the image array
-                front_img = sensor_data
-        
-        # Try: obs_dict["image"]["front"]["rgb"]
-        if front_img is None and "image" in obs_dict and "front" in obs_dict["image"]:
-            front_img = obs_dict["image"]["front"]
-            if isinstance(front_img, dict) and "rgb" in front_img:
-                front_img = front_img["rgb"]
-        
-        # Process front image if found
-        if front_img is not None:
+        # Process image
+        if camera_img is not None:
             # Convert torch.Tensor to numpy
-            if isinstance(front_img, torch.Tensor):
-                front_img = front_img.cpu().numpy()
+            if isinstance(camera_img, torch.Tensor):
+                camera_img = camera_img.cpu().numpy()
             
             # Handle batch dimension
-            if front_img.ndim == 4:
-                front_img = front_img[0]  # Remove batch dimension (B, H, W, C) -> (H, W, C)
-            elif front_img.ndim == 3:
-                # Check if it's (C, H, W) or (H, W, C)
-                if front_img.shape[0] == 3 or front_img.shape[0] == 4:
-                    # Shape is (C, H, W), convert to (H, W, C)
-                    front_img = front_img.transpose(1, 2, 0)
+            if camera_img.ndim == 4:
+                camera_img = camera_img[0]
+            elif camera_img.ndim == 3 and camera_img.shape[0] in [3, 4]:
+                # (C, H, W) -> (H, W, C)
+                camera_img = camera_img.transpose(1, 2, 0)
+            
+            # Convert RGBA to RGB
+            if camera_img.ndim == 3 and camera_img.shape[-1] == 4:
+                camera_img = camera_img[..., :3]
             
             # Convert to uint8
-            if front_img.dtype != np.uint8:
-                if front_img.max() <= 1.0:
-                    front_img = (front_img * 255).astype(np.uint8)
+            if camera_img.dtype != np.uint8:
+                if camera_img.max() <= 1.0:
+                    camera_img = (camera_img * 255).astype(np.uint8)
                 else:
-                    front_img = np.clip(front_img, 0, 255).astype(np.uint8)
+                    camera_img = np.clip(camera_img, 0, 255).astype(np.uint8)
             
-            # Convert RGBA to RGB if needed
-            if front_img.ndim == 3 and front_img.shape[-1] == 4:
-                front_img = front_img[..., :3]
+            # Ensure correct shape (H, W, C)
+            if camera_img.shape[:2] != (480, 640):
+                camera_img = cv2.resize(camera_img, (640, 480))
             
-            # Debug: check image statistics
-            if verbose and not hasattr(get_observation_from_env, "_img_stats_printed"):
-                img_mean = front_img.mean()
-                img_max = front_img.max()
-                img_min = front_img.min()
-                print(f"DEBUG: Front camera image stats - mean: {img_mean:.2f}, min: {img_min:.2f}, max: {img_max:.2f}, shape: {front_img.shape}, dtype: {front_img.dtype}")
-                if img_mean < 1.0:
-                    print(f"WARNING: Front camera image appears to be all black (mean={img_mean:.2f})")
-                get_observation_from_env._img_stats_printed = True
-            
-            images["front"] = front_img
+            images[camera_name] = camera_img
         else:
+            # Use black placeholder if camera not available
             if verbose:
-                print(f"WARNING: Could not find front camera in sensors or obs_dict")
-            images["front"] = np.zeros((480, 640, 3), dtype=np.uint8)
+                print(f"Warning: {camera_name} camera not found, using black placeholder")
+            images[camera_name] = np.zeros((480, 640, 3), dtype=np.uint8)
     
-    # Get wrist camera images from sensors or sensor_data
-    # For dual-arm tasks (sort): left_wrist and right_wrist
-    # For single-arm tasks (lift, stack): right_wrist only
-    if num_agents > 1:
-        # Dual-arm: get left_wrist and right_wrist
-        # Try from sensors first
-        if hasattr(env_unwrapped, 'sensors'):
-            # Try left_wrist
-            if 'left_wrist' in env_unwrapped.sensors:
-                try:
-                    left_wrist_camera = env_unwrapped.sensors['left_wrist']
-                    left_wrist_img = left_wrist_camera.take_picture()
-                    if isinstance(left_wrist_img, torch.Tensor):
-                        left_wrist_img = left_wrist_img.cpu().numpy()
-                    if left_wrist_img.ndim == 4:
-                        left_wrist_img = left_wrist_img[0]
-                    if left_wrist_img.shape[-1] == 4:
-                        left_wrist_img = left_wrist_img[..., :3]
-                    if left_wrist_img.dtype != np.uint8:
-                        if left_wrist_img.max() <= 1.0:
-                            left_wrist_img = (left_wrist_img * 255).astype(np.uint8)
-                        else:
-                            left_wrist_img = np.clip(left_wrist_img, 0, 255).astype(np.uint8)
-                    images["left_wrist"] = left_wrist_img
-                except Exception as e:
-                    if verbose:
-                        print(f"WARNING: Failed to get left_wrist camera image: {e}")
-                    images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-            else:
-                images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-            
-            # Try right_wrist
-            if 'right_wrist' in env_unwrapped.sensors:
-                try:
-                    right_wrist_camera = env_unwrapped.sensors['right_wrist']
-                    right_wrist_img = right_wrist_camera.take_picture()
-                    if isinstance(right_wrist_img, torch.Tensor):
-                        right_wrist_img = right_wrist_img.cpu().numpy()
-                    if right_wrist_img.ndim == 4:
-                        right_wrist_img = right_wrist_img[0]
-                    if right_wrist_img.shape[-1] == 4:
-                        right_wrist_img = right_wrist_img[..., :3]
-                    if right_wrist_img.dtype != np.uint8:
-                        if right_wrist_img.max() <= 1.0:
-                            right_wrist_img = (right_wrist_img * 255).astype(np.uint8)
-                        else:
-                            right_wrist_img = np.clip(right_wrist_img, 0, 255).astype(np.uint8)
-                    images["right_wrist"] = right_wrist_img
-                except Exception as e:
-                    if verbose:
-                        print(f"WARNING: Failed to get right_wrist camera image: {e}")
-                    images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-            else:
-                images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-        else:
-            # Fallback: try from sensor_data
-            obs_dict = env.get_obs()
-            if "sensor_data" in obs_dict:
-                sensor_data = obs_dict["sensor_data"]
-                if isinstance(sensor_data, dict):
-                    # Try left_wrist
-                    if "left_wrist" in sensor_data:
-                        left_wrist_data = sensor_data["left_wrist"]
-                        if isinstance(left_wrist_data, dict) and "rgb" in left_wrist_data:
-                            left_wrist_img = left_wrist_data["rgb"]
-                            if isinstance(left_wrist_img, torch.Tensor):
-                                left_wrist_img = left_wrist_img.cpu().numpy()
-                            if left_wrist_img.ndim == 4:
-                                left_wrist_img = left_wrist_img[0]
-                            if left_wrist_img.shape[-1] == 4:
-                                left_wrist_img = left_wrist_img[..., :3]
-                            if left_wrist_img.dtype != np.uint8:
-                                if left_wrist_img.max() <= 1.0:
-                                    left_wrist_img = (left_wrist_img * 255).astype(np.uint8)
-                                else:
-                                    left_wrist_img = np.clip(left_wrist_img, 0, 255).astype(np.uint8)
-                            images["left_wrist"] = left_wrist_img
-                        else:
-                            images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-                    else:
-                        images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-                    
-                    # Try right_wrist
-                    if "right_wrist" in sensor_data:
-                        right_wrist_data = sensor_data["right_wrist"]
-                        if isinstance(right_wrist_data, dict) and "rgb" in right_wrist_data:
-                            right_wrist_img = right_wrist_data["rgb"]
-                            if isinstance(right_wrist_img, torch.Tensor):
-                                right_wrist_img = right_wrist_img.cpu().numpy()
-                            if right_wrist_img.ndim == 4:
-                                right_wrist_img = right_wrist_img[0]
-                            if right_wrist_img.shape[-1] == 4:
-                                right_wrist_img = right_wrist_img[..., :3]
-                            if right_wrist_img.dtype != np.uint8:
-                                if right_wrist_img.max() <= 1.0:
-                                    right_wrist_img = (right_wrist_img * 255).astype(np.uint8)
-                                else:
-                                    right_wrist_img = np.clip(right_wrist_img, 0, 255).astype(np.uint8)
-                            images["right_wrist"] = right_wrist_img
-                        else:
-                            images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-                    else:
-                        images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-                else:
-                    images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-                    images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-            else:
-                images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-                images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-    else:
-        # Single-arm: get right_wrist only
-        if hasattr(env_unwrapped, 'sensors'):
-            if 'right_wrist' in env_unwrapped.sensors:
-                try:
-                    right_wrist_camera = env_unwrapped.sensors['right_wrist']
-                    right_wrist_img = right_wrist_camera.take_picture()
-                    if isinstance(right_wrist_img, torch.Tensor):
-                        right_wrist_img = right_wrist_img.cpu().numpy()
-                    if right_wrist_img.ndim == 4:
-                        right_wrist_img = right_wrist_img[0]
-                    if right_wrist_img.shape[-1] == 4:
-                        right_wrist_img = right_wrist_img[..., :3]
-                    if right_wrist_img.dtype != np.uint8:
-                        if right_wrist_img.max() <= 1.0:
-                            right_wrist_img = (right_wrist_img * 255).astype(np.uint8)
-                        else:
-                            right_wrist_img = np.clip(right_wrist_img, 0, 255).astype(np.uint8)
-                    images["right_wrist"] = right_wrist_img
-                except Exception as e:
-                    if verbose:
-                        print(f"WARNING: Failed to get right_wrist camera image: {e}")
-                    images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-            else:
-                images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-        else:
-            # Fallback: try from sensor_data
-            obs_dict = env.get_obs()
-            if "sensor_data" in obs_dict:
-                sensor_data = obs_dict["sensor_data"]
-                if isinstance(sensor_data, dict) and "right_wrist" in sensor_data:
-                    right_wrist_data = sensor_data["right_wrist"]
-                    if isinstance(right_wrist_data, dict) and "rgb" in right_wrist_data:
-                        right_wrist_img = right_wrist_data["rgb"]
-                        if isinstance(right_wrist_img, torch.Tensor):
-                            right_wrist_img = right_wrist_img.cpu().numpy()
-                        if right_wrist_img.ndim == 4:
-                            right_wrist_img = right_wrist_img[0]
-                        if right_wrist_img.shape[-1] == 4:
-                            right_wrist_img = right_wrist_img[..., :3]
-                        if right_wrist_img.dtype != np.uint8:
-                            if right_wrist_img.max() <= 1.0:
-                                right_wrist_img = (right_wrist_img * 255).astype(np.uint8)
-                            else:
-                                right_wrist_img = np.clip(right_wrist_img, 0, 255).astype(np.uint8)
-                        images["right_wrist"] = right_wrist_img
-                    else:
-                        images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-                else:
-                    images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
-            else:
-                images["right_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+    # Apply visual disturbance if requested (for generalization testing)
+    raw_images = images.copy()  # Keep original images for video saving
+    if apply_visual_disturbance_flag:
+        images = apply_visual_disturbance(
+            images,
+            brightness_factor=brightness_factor,
+            contrast_factor=contrast_factor,
+            noise_std=noise_std,
+        )
+    
+    # Build observation dict in LeRobot format
+    # State should be raw joint positions (float32), will be normalized by policy
+    observation = {
+        "observation.state": state.astype(np.float32),
+    }
+    
+    # Debug: verify state dimension matches expected
+    if verbose:
+        print(f"  State: shape={state.shape}, dtype={state.dtype}, range=[{state.min():.3f}, {state.max():.3f}]")
+    
+    # Add images (convert to tensor format: C, H, W)
+    # IMPORTANT: Images should be in [0, 1] range (float32) for LeRobot normalization
+    # LeRobot's normalize_inputs will apply MEAN_STD normalization automatically
+    for camera_name, img in images.items():
+        # Convert (H, W, C) to (C, H, W) and normalize to [0, 1]
+        # img is already uint8 [0, 255], convert to float [0, 1]
+        img_tensor = torch.from_numpy(img).float() / 255.0
+        if img_tensor.dim() == 3:
+            img_tensor = img_tensor.permute(2, 0, 1)  # (H, W, C) -> (C, H, W)
+        observation[f"observation.images.{camera_name}"] = img_tensor
+    
+    return observation, raw_images
+    
+    return observation, raw_images  # Return both for video saving
+
+
+def prepare_batch_for_policy(observation: Dict[str, Any], device: str = "cuda", verbose: bool = False) -> Dict[str, torch.Tensor]:
+    """
+    Prepare observation batch for ACT policy.
+    
+    ACT expects:
+    - observation.state: (batch_size, state_dim) - float32, raw values (will be normalized by policy)
+    - observation.images.*: (batch_size, C, H, W) - float32, [0, 1] range (will be normalized by policy)
+    
+    Note: The policy's normalize_inputs will automatically apply MEAN_STD normalization.
+    We just need to provide data in the correct format and range.
+    """
+    batch = {}
+    
+    # State: (state_dim,) -> (1, state_dim)
+    if "observation.state" in observation:
+        state = observation["observation.state"]
+        if isinstance(state, np.ndarray):
+            state = torch.from_numpy(state).float()
+        if state.dim() == 1:
+            state = state.unsqueeze(0)  # (1, state_dim)
+        batch["observation.state"] = state.to(device)
         
-        # For single-arm, also set left_wrist as placeholder (not used)
-        images["left_wrist"] = np.zeros((480, 640, 3), dtype=np.uint8)
+        if verbose:
+            print(f"  State: shape={state.shape}, range=[{state.min():.3f}, {state.max():.3f}]")
     
-    # Get task prompt
-    task_prompt = getattr(env_unwrapped, "TASK_PROMPT", "")
+    # Images: (C, H, W) -> (1, C, H, W)
+    # Images should be in [0, 1] range (float32)
+    for key, value in observation.items():
+        if key.startswith("observation.images."):
+            if isinstance(value, np.ndarray):
+                value = torch.from_numpy(value).float()
+            if value.dim() == 3:
+                value = value.unsqueeze(0)  # (1, C, H, W)
+            
+            # Ensure values are in [0, 1] range
+            if value.max() > 1.0:
+                print(f"  WARNING: {key} has values > 1.0 (max={value.max():.3f}), normalizing to [0, 1]")
+                value = value / 255.0
+            
+            batch[key] = value.to(device)
+            
+            if verbose:
+                print(f"  {key}: shape={value.shape}, range=[{value.min():.3f}, {value.max():.3f}], dtype={value.dtype}")
     
-    if num_agents > 1:
-        return {
-            "states": {
-                "left_arm": left_arm,
-                "right_arm": right_arm,
-            },
-            "images": images,
-            "task": task_prompt,
-        }
-    else:
-        return {
-            "states": {
-                "arm": state,
-            },
-            "images": images,
-            "task": task_prompt,
-        }
+    return batch
 
 
 def main():
     args = parse_args()
     
-    # Create output directory
-    output_dir = pathlib.Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    video_dir = output_dir / "videos"
-    camera_dir = output_dir / "camera_videos"
+    if not LEROBOT_AVAILABLE:
+        raise ImportError("LeRobot is required. Please install it: pip install lerobot")
+    
+    # Create output directory structure: output_dir/env_id/
+    # This allows each task to have its own folder
+    base_output_dir = pathlib.Path(args.output_dir)
+    task_output_dir = base_output_dir / args.env_id
+    task_output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create subdirectories for videos
+    video_dir = task_output_dir / "videos"
+    camera_dir = task_output_dir / "camera_videos"
     if args.save_video:
         video_dir.mkdir(parents=True, exist_ok=True)
     if args.save_camera:
         camera_dir.mkdir(parents=True, exist_ok=True)
     
+    # Use task_output_dir as the main output directory
+    output_dir = task_output_dir
+    
     # Load policy
     print(f"Loading policy from {args.policy_path}")
-    policy = DeployablePolicy(
-        pathlib.Path(args.policy_path),
-        device=args.device,
-        robot_type=args.robot_type
-    )
+    policy, policy_config = load_policy(pathlib.Path(args.policy_path), device=args.device)
+    
+    # Determine required cameras based on environment
+    required_cameras = determine_cameras_from_env(args.env_id)
+    print(f"Required cameras: {required_cameras}")
+    print(f"Output directory: {output_dir}")
     
     # Create environment
     env = gym.make(
@@ -503,26 +532,22 @@ def main():
         sim_backend="auto"
     )
     # Only apply FlattenActionSpaceWrapper if action space is Dict (multi-agent/dual-arm)
-    # Single-arm environments have Box action space and don't need flattening
     if isinstance(env.action_space, gym.spaces.Dict):
         env = FlattenActionSpaceWrapper(env)
     
     # Auto-detect robot type from environment
     env_unwrapped = env.unwrapped
     num_agents = len(env_unwrapped.agent.agents) if hasattr(env_unwrapped.agent, "agents") else 1
-    if num_agents > 1:
-        detected_robot_type = "bi_so101"
-    else:
-        detected_robot_type = "so101"
-    
-    # Use detected robot type if not explicitly specified or if it differs
-    if args.robot_type != detected_robot_type:
-        print(f"Warning: Specified robot_type '{args.robot_type}' differs from detected '{detected_robot_type}'. Using detected type.")
-        args.robot_type = detected_robot_type
+    robot_type = "bi_so101" if num_agents > 1 else "so101"
     
     print(f"Evaluating policy on {args.env_id}")
     print(f"Number of episodes: {args.num_episodes}")
-    print(f"Robot type: {args.robot_type} ({num_agents} arm{'s' if num_agents > 1 else ''})")
+    print(f"Robot type: {robot_type} ({num_agents} arm{'s' if num_agents > 1 else ''})")
+    if args.visual_disturbance:
+        print(f"Visual disturbance enabled:")
+        print(f"  - Brightness factor: {args.brightness_factor}")
+        print(f"  - Contrast factor: {args.contrast_factor}")
+        print(f"  - Noise std: {args.noise_std}")
     if args.save_video:
         print(f"Videos will be saved to: {video_dir}")
         if args.save_failed_only:
@@ -549,49 +574,74 @@ def main():
         episode_rewards = []
         episode_actions = []
         frames = [] if args.save_video else None
-        camera_frames = {} if args.save_camera else None
+        camera_frames = {cam: [] for cam in required_cameras} if args.save_camera else None
         
         while not done:
-            # IMPORTANT: Render the scene before getting observations
-            # This ensures sensors have updated images
-            # Note: env.render() returns the render camera view, not sensor views
-            # But calling it ensures the scene is updated for sensors
+            # Render scene before getting observations
             if args.save_video:
-                _ = env.render()  # Update scene for rendering
+                _ = env.render()
             
             # Get observation in LeRobot format
-            # Pass verbose flag to enable debugging
-            observation = get_observation_from_env(env, verbose=args.verbose)
+            observation, raw_images = get_observation_from_env(
+                env, 
+                required_cameras=required_cameras,
+                verbose=args.verbose and episode == 0,  # Only verbose for first episode
+                apply_visual_disturbance_flag=args.visual_disturbance,
+                brightness_factor=args.brightness_factor,
+                contrast_factor=args.contrast_factor,
+                noise_std=args.noise_std,
+            )
             
             # Save camera frames if requested
-            if args.save_camera and "images" in observation:
-                for camera_name, camera_img in observation["images"].items():
-                    if camera_name not in camera_frames:
-                        camera_frames[camera_name] = []
-                    # Ensure image is uint8 and correct format
-                    if isinstance(camera_img, torch.Tensor):
-                        camera_img = camera_img.cpu().numpy()
-                    if camera_img.dtype != np.uint8:
-                        if camera_img.max() <= 1.0:
-                            camera_img = (camera_img * 255).astype(np.uint8)
-                        else:
-                            camera_img = camera_img.astype(np.uint8)
-                    camera_frames[camera_name].append(camera_img.copy())
+            if args.save_camera and camera_frames is not None:
+                for camera_name in required_cameras:
+                    if camera_name in raw_images:
+                        camera_frames[camera_name].append(raw_images[camera_name].copy())
+            
+            # Prepare batch for policy
+            batch = prepare_batch_for_policy(
+                observation, 
+                device=args.device,
+                verbose=args.verbose and episode == 0 and len(episode_actions) == 0  # Only first step of first episode
+            )
             
             # Get action from policy
-            action = policy.get_actions(observation)
+            # select_action automatically handles normalization and returns unnormalized action
+            with torch.no_grad():
+                action = policy.select_action(batch)  # Returns (action_dim,) - already unnormalized
+            
+            # Convert to numpy
+            if isinstance(action, torch.Tensor):
+                action = action.cpu().numpy()
+            else:
+                action = np.asarray(action)
+            
+            # Ensure action is 1D
+            if action.ndim > 1:
+                action = action.flatten()
+            
+            # Debug: print action statistics (only first step of first episode)
+            if args.verbose and episode == 0 and len(episode_actions) == 0:
+                print(f"  Action: shape={action.shape}, range=[{action.min():.3f}, {action.max():.3f}], mean={action.mean():.3f}")
+            
+            # Clip action to action space bounds (safety check)
+            if hasattr(env, 'action_space'):
+                if hasattr(env.action_space, 'low') and hasattr(env.action_space, 'high'):
+                    action_before_clip = action.copy()
+                    action = np.clip(action, env.action_space.low, env.action_space.high)
+                    if args.verbose and episode == 0 and len(episode_actions) == 0 and not np.allclose(action, action_before_clip):
+                        print(f"  WARNING: Action was clipped! Before: {action_before_clip}, After: {action}")
+            
             episode_actions.append(action.copy())
             
             # Save frame if recording video
             if args.save_video:
                 frame = env.render()
                 if frame is not None:
-                    # Convert torch.Tensor to numpy array if needed
                     if isinstance(frame, torch.Tensor):
                         frame = frame.cpu().numpy()
-                    # Handle batch dimension if present
                     if frame.ndim == 4 and frame.shape[0] == 1:
-                        frame = frame[0]  # Remove batch dimension
+                        frame = frame[0]
                     frames.append(frame)
             
             # Execute action
@@ -599,9 +649,6 @@ def main():
             episode_rewards.append(reward)
             done = terminated or truncated
             episode_length += 1
-            
-            # Note: ManiSkill environments handle truncation automatically via the TimeLimitWrapper
-            # The 'truncated' flag will be True when max_episode_steps is reached
         
         # Evaluate success
         eval_result = env.unwrapped.evaluate()
@@ -618,72 +665,56 @@ def main():
             if should_save:
                 video_path = video_dir / f"episode_{episode:04d}_{'success' if success else 'failed'}.mp4"
                 if len(frames) > 0:
-                    # Convert all frames to numpy arrays
                     processed_frames = []
                     for frame in frames:
-                        # Ensure frame is numpy array
                         if isinstance(frame, torch.Tensor):
                             frame = frame.cpu().numpy()
                         if frame.ndim == 4 and frame.shape[0] == 1:
                             frame = frame[0]
-                        # Ensure uint8 dtype and correct shape
                         if frame.dtype != np.uint8:
                             frame = np.clip(frame, 0, 255).astype(np.uint8)
-                        # Ensure RGB format (H, W, 3)
-                        if frame.shape[-1] != 3:
-                            raise ValueError(f"Expected RGB image with shape (H, W, 3), got {frame.shape}")
-                        processed_frames.append(frame)
+                        if frame.shape[-1] == 3:
+                            processed_frames.append(frame)
                     
                     if len(processed_frames) > 0:
                         video_written = False
-                        
-                        # Prefer imageio as it's more reliable and compatible
                         if IMAGEIO_AVAILABLE:
                             try:
-                                # imageio saves videos more reliably with better codec support
                                 imageio.mimsave(
                                     str(video_path),
                                     processed_frames,
                                     fps=20,
                                     codec='libx264',
                                     quality=8,
-                                    pixelformat='yuv420p'  # Better compatibility
+                                    pixelformat='yuv420p'
                                 )
                                 video_written = True
                             except Exception as e:
                                 if args.verbose:
-                                    print(f"Failed to save video with imageio: {e}, trying OpenCV...")
+                                    print(f"Failed to save video with imageio: {e}")
                         
-                        # Fallback to OpenCV if imageio failed or not available
                         if not video_written:
                             height, width = processed_frames[0].shape[:2]
-                            # Try using H.264 codec (more compatible)
                             fourcc_options = [
-                                cv2.VideoWriter_fourcc(*'avc1'),  # H.264 (most compatible)
-                                cv2.VideoWriter_fourcc(*'XVID'),  # XVID
-                                cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
+                                cv2.VideoWriter_fourcc(*'avc1'),
+                                cv2.VideoWriter_fourcc(*'XVID'),
+                                cv2.VideoWriter_fourcc(*'mp4v'),
                             ]
-                            
                             for fourcc in fourcc_options:
                                 try:
                                     out = cv2.VideoWriter(str(video_path), fourcc, 20.0, (width, height))
                                     if out.isOpened():
                                         for frame in processed_frames:
-                                            # Convert RGB to BGR for OpenCV
                                             frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                                             out.write(frame_bgr)
                                         out.release()
                                         video_written = True
                                         break
-                                except Exception as e:
-                                    if args.verbose:
-                                        print(f"Failed to write video with codec {fourcc}: {e}")
+                                except Exception:
                                     continue
                         
                         if video_written and args.verbose:
                             print(f"Saved video: {video_path}")
-                        elif not video_written:
-                            print(f"Warning: Failed to save video: {video_path}")
         
         # Save camera videos if requested
         if args.save_camera and camera_frames:
@@ -694,7 +725,6 @@ def main():
                         continue
                     camera_video_path = camera_dir / f"episode_{episode:04d}_{camera_name}_{'success' if success else 'failed'}.mp4"
                     
-                    # Process frames
                     processed_frames = []
                     for frame in frames:
                         if isinstance(frame, torch.Tensor):
@@ -703,14 +733,11 @@ def main():
                             frame = frame[0]
                         if frame.dtype != np.uint8:
                             frame = np.clip(frame, 0, 255).astype(np.uint8)
-                        if frame.shape[-1] != 3:
-                            continue  # Skip if not RGB
-                        processed_frames.append(frame)
+                        if frame.shape[-1] == 3:
+                            processed_frames.append(frame)
                     
                     if len(processed_frames) > 0:
                         video_written = False
-                        
-                        # Try imageio first
                         if IMAGEIO_AVAILABLE:
                             try:
                                 imageio.mimsave(
@@ -722,11 +749,9 @@ def main():
                                     pixelformat='yuv420p'
                                 )
                                 video_written = True
-                            except Exception as e:
-                                if args.verbose:
-                                    print(f"Failed to save camera video with imageio: {e}, trying OpenCV...")
+                            except Exception:
+                                pass
                         
-                        # Fallback to OpenCV
                         if not video_written:
                             height, width = processed_frames[0].shape[:2]
                             fourcc_options = [
@@ -734,7 +759,6 @@ def main():
                                 cv2.VideoWriter_fourcc(*'XVID'),
                                 cv2.VideoWriter_fourcc(*'mp4v'),
                             ]
-                            
                             for fourcc in fourcc_options:
                                 try:
                                     out = cv2.VideoWriter(str(camera_video_path), fourcc, 20.0, (width, height))
@@ -745,15 +769,8 @@ def main():
                                         out.release()
                                         video_written = True
                                         break
-                                except Exception as e:
-                                    if args.verbose:
-                                        print(f"Failed to write camera video with codec {fourcc}: {e}")
+                                except Exception:
                                     continue
-                        
-                        if video_written and args.verbose:
-                            print(f"Saved camera video ({camera_name}): {camera_video_path}")
-                        elif not video_written:
-                            print(f"Warning: Failed to save camera video ({camera_name}): {camera_video_path}")
     
     env.close()
     

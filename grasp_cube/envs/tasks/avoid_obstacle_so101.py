@@ -47,11 +47,33 @@ class AvoidObstacleSO101Env(BaseEnv):
 
     @property
     def _default_sensor_configs(self):
+        """Configure cameras for LeRobot Dataset format.
+        - Front camera: 480×640, third-person view
+        - Left side camera: 480×640, fixed pose on the left side
+        - Right side camera: 480×640, fixed pose on the right side
+        
+        All tasks use the same three cameras: front + left_side + right_side.
+        """
         configs = []
+        
+        # Front camera: third-person view, 480×640 resolution
         front_pose = sapien_utils.look_at(
             eye=self.sensor_cam_eye_pos, target=self.sensor_cam_target_pos
         )
         configs.append(CameraConfig("front", front_pose, 640, 480, np.deg2rad(50), 0.01, 100))
+        
+        # Left side camera: fixed pose on the left side, covering top-left and top-middle regions
+        left_side_eye = [-0.215, 0.33, 0.2]  # Left side position
+        left_side_target = [-0.455, 0.115, 0.05]  # Looking at center between top-left (y=0.17) and top-middle (y=0.0)
+        left_side_pose = sapien_utils.look_at(eye=left_side_eye, target=left_side_target)
+        configs.append(CameraConfig("left_side", left_side_pose, 640, 480, np.deg2rad(50), 0.01, 100))
+        
+        # Right side camera: fixed pose on the right side, covering top-right and top-middle regions
+        right_side_eye = [-0.215, -0.33, 0.2]  # Right side position
+        right_side_target = [-0.455, -0.115, 0.05]  # Looking at center between top-right (y=-0.17) and top-middle (y=0.0)
+        right_side_pose = sapien_utils.look_at(eye=right_side_eye, target=right_side_target)
+        configs.append(CameraConfig("right_side", right_side_pose, 640, 480, np.deg2rad(50), 0.01, 100))
+        
         return configs
 
     @property
@@ -191,7 +213,7 @@ class AvoidObstacleSO101Env(BaseEnv):
             self.scene, half_size=self.cube_half_size, color=[0, 1, 0, 1], name="cube_green"
         )
         
-        # Obstacle blocks (3 for left column, 3 for right column) - 第一排
+        # Obstacle blocks (3 for left column, 3 for right column) - first row
         self.obstacles_left = []
         self.obstacles_right = []
         for i in range(3):
@@ -206,8 +228,7 @@ class AvoidObstacleSO101Env(BaseEnv):
             self.obstacles_left.append(obs_left)
             self.obstacles_right.append(obs_right)
 
-        # --- START: 核心修改 (最小改动) ---
-        # 再创建第二排障碍物
+        # Create second row of obstacles (for dual-layer obstacle layout)
         self.obstacles_left_2 = []
         self.obstacles_right_2 = []
         for i in range(3):
@@ -221,7 +242,6 @@ class AvoidObstacleSO101Env(BaseEnv):
             )
             self.obstacles_left_2.append(obs_left_2)
             self.obstacles_right_2.append(obs_right_2)
-        # --- END: 核心修改 ---
 
         # Goals
         self.goal_red = actors.build_sphere(
@@ -250,65 +270,40 @@ class AvoidObstacleSO101Env(BaseEnv):
             
             top_row_x = grid_start_x + box_inner/2 + box_inner + thickness  # Top row
             
-            
-            '''
-            # Place cubes in top row
-            xyz_red = torch.zeros((b, 3), device=self.device)
-            xyz_red[:, 0] = top_row_x
-            xyz_red[:, 1] = right_col_y - 0.07  # 绿在右
-            xyz_red[:, 2] = self.cube_half_size
-            
-            xyz_green = torch.zeros((b, 3), device=self.device)
-            xyz_green[:, 0] = top_row_x
-            xyz_green[:, 1] = left_col_y + 0.07  # 红在左
-            xyz_green[:, 2] = self.cube_half_size
-            '''
-            
-
-            # --- START: 核心修改 (最小改动) ---
-
-            # 1. 定义X轴的随机偏移范围: +/- 3cm (总范围6cm)
-            random_x_range = 0.08
-            
-            # 2. 为每个方块独立生成X轴的随机偏移量
-            # 将 [0, 1] 的随机数映射到 [-0.04, 0.04]
+            # Place cubes in top row with X-axis randomization for domain randomization
+            # Randomize cube positions along X-axis (±4cm range)
+            random_x_range = 0.08  # ±4cm randomization range
             x_offsets_red = (torch.rand((b, 1), device=self.device) * random_x_range) - (random_x_range / 2)
             x_offsets_green = (torch.rand((b, 1), device=self.device) * random_x_range) - (random_x_range / 2)
-
-            # 3. 放置方块，Y轴固定，X轴在基准上增加随机偏移
             
-            # 红色方块 (右列)
+            # Red cube (right column) with X-axis randomization
             xyz_red = torch.zeros((b, 3), device=self.device)
-            xyz_red[:, 0] = top_row_x + x_offsets_red.squeeze()   # 在X轴上应用随机偏移
-            xyz_red[:, 1] = right_col_y - 0.07                    # Y轴位置保持固定
+            xyz_red[:, 0] = top_row_x + x_offsets_red.squeeze()  # Apply random X offset
+            xyz_red[:, 1] = right_col_y - 0.07  # Fixed Y position
             xyz_red[:, 2] = self.cube_half_size
             
-            # 绿色方块 (左列)
+            # Green cube (left column) with X-axis randomization
             xyz_green = torch.zeros((b, 3), device=self.device)
-            xyz_green[:, 0] = top_row_x + x_offsets_green.squeeze() # 在X轴上应用随机偏移
-            xyz_green[:, 1] = left_col_y + 0.07                     # Y轴位置保持固定
+            xyz_green[:, 0] = top_row_x + x_offsets_green.squeeze()  # Apply random X offset
+            xyz_green[:, 1] = left_col_y + 0.07  # Fixed Y position
             xyz_green[:, 2] = self.cube_half_size
-
-            # --- END: 核心修改 ---
             
             # --- START: 核心修正 ---
             # 不再生成随机旋转，而是创建一个固定的“无旋转”姿态
             # 单位四元数 [w, x, y, z] = [1, 0, 0, 0] 代表无旋转
             no_rotation_q = torch.tensor([1.0, 0.0, 0.0, 0.0], device=self.device)
-            # 将其扩展到与批次大小 b 匹配
             qs = no_rotation_q.unsqueeze(0).repeat(b, 1)
 
-            # 将固定的姿态应用到两个方块上
+            # Apply poses to cubes
             self.cube_red.set_pose(Pose.create_from_pq(xyz_red, qs))
             self.cube_green.set_pose(Pose.create_from_pq(xyz_green, qs))
-            # --- END: 核心修正 ---
             
             # Place obstacle blocks
             obstacle_spacing = self.obstacle_half_size * 2 + 0.005
             obstacle_start_x = grid_start_x + box_inner/2 + 0.14
             
             for i in range(3):
-                # 第一排障碍物 (代码完全不变)
+                # Place first row of obstacles
                 obs_xyz_left = torch.zeros((b, 3), device=self.device)
                 obs_xyz_left[:, 0] = obstacle_start_x + i * obstacle_spacing
                 obs_xyz_left[:, 1] = left_col_y
@@ -321,25 +316,22 @@ class AvoidObstacleSO101Env(BaseEnv):
                 obs_xyz_right[:, 2] = self.obstacle_half_size
                 self.obstacles_right[i].set_pose(Pose.create_from_pq(obs_xyz_right))
 
-                # --- START: 核心修改 (最小改动) ---
-                # 放置第二排障碍物，紧贴着第一排
-                # Y轴偏移量 = 一个方块的宽度
-                y_offset = self.obstacle_half_size * 2
+                # Place second row of obstacles (offset inward from first row)
+                y_offset = self.obstacle_half_size * 2  # One cube width
 
-                # 第二排左侧障碍物 (向内侧偏移)
+                # Second row left obstacles (offset inward)
                 obs_xyz_left_2 = torch.zeros((b, 3), device=self.device)
                 obs_xyz_left_2[:, 0] = obstacle_start_x + i * obstacle_spacing
                 obs_xyz_left_2[:, 1] = left_col_y - y_offset - 0.04
                 obs_xyz_left_2[:, 2] = self.obstacle_half_size
                 self.obstacles_left_2[i].set_pose(Pose.create_from_pq(obs_xyz_left_2))
 
-                # 第二排右侧障碍物 (向内侧偏移)
+                # Second row right obstacles (offset inward)
                 obs_xyz_right_2 = torch.zeros((b, 3), device=self.device)
                 obs_xyz_right_2[:, 0] = obstacle_start_x + i * obstacle_spacing
                 obs_xyz_right_2[:, 1] = right_col_y + y_offset + 0.04
                 obs_xyz_right_2[:, 2] = self.obstacle_half_size
                 self.obstacles_right_2[i].set_pose(Pose.create_from_pq(obs_xyz_right_2))
-                # --- END: 核心修改 ---
 
             # Goals in middle column
             goal_red_xyz = torch.zeros((b, 3), device=self.device)

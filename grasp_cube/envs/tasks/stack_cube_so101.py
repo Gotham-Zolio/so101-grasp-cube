@@ -14,7 +14,7 @@ import mani_skill.envs.utils.randomization as randomization
 from mani_skill.sensors.camera import CameraConfig
 from mani_skill.utils import sapien_utils
 
-@register_env("StackCubeSO101-v1", max_episode_steps=100)
+@register_env("StackCubeSO101-v1", max_episode_steps=200)
 class StackCubeSO101Env(BaseEnv):
     SUPPORTED_ROBOTS = ["so101"]
     
@@ -39,7 +39,8 @@ class StackCubeSO101Env(BaseEnv):
     def _default_sensor_configs(self):
         """Configure cameras for LeRobot Dataset format.
         - Front camera: 480×640, third-person view
-        - Wrist camera: 480×640, attached to right arm's camera_link (defined in SO101 agent class)
+        - Left side camera: 480×640, fixed pose on the left side
+        - Right side camera: 480×640, fixed pose on the right side
         """
         configs = []
         
@@ -49,9 +50,17 @@ class StackCubeSO101Env(BaseEnv):
         )
         configs.append(CameraConfig("front", front_pose, 640, 480, np.deg2rad(50), 0.01, 100))
         
-        # Note: Wrist camera is defined in SO101 agent's _sensor_configs property
-        # It will be automatically attached to camera_link and named "wrist_camera"
-        # We'll map it to "right_wrist" in data collection
+        # Left side camera: fixed pose on the left side, covering top-left and top-middle regions
+        left_side_eye = [-0.215, 0.33, 0.2]  # Left side position (x moved to -0.265)
+        left_side_target = [-0.455, 0.115, 0.05]  # Looking at center between top-left (y=0.17) and top-middle (y=0.0)
+        left_side_pose = sapien_utils.look_at(eye=left_side_eye, target=left_side_target)
+        configs.append(CameraConfig("left_side", left_side_pose, 640, 480, np.deg2rad(50), 0.01, 100))
+        
+        # Right side camera: fixed pose on the right side, covering top-right and top-middle regions
+        right_side_eye = [-0.215, -0.33, 0.2]  # Right side position (x moved to -0.265)
+        right_side_target = [-0.455, -0.115, 0.05]  # Looking at center between top-right (y=-0.17) and top-middle (y=0.0)
+        right_side_pose = sapien_utils.look_at(eye=right_side_eye, target=right_side_target)
+        configs.append(CameraConfig("right_side", right_side_pose, 640, 480, np.deg2rad(50), 0.01, 100))
         
         return configs
     
@@ -67,6 +76,7 @@ class StackCubeSO101Env(BaseEnv):
         super()._load_agent(options, [
             sapien.Pose(p=[-0.665, -0.15, 0])  # Right arm position
         ])
+        # Note: No need to mount cameras - left_side and right_side are fixed pose cameras
 
     def _build_boundary_lines(self):
         """

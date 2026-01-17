@@ -14,7 +14,7 @@ import mani_skill.envs.utils.randomization as randomization
 from mani_skill.sensors.camera import CameraConfig
 from mani_skill.utils import sapien_utils
 
-@register_env("SortCubeSO101-v1", max_episode_steps=100)
+@register_env("SortCubeSO101-v1", max_episode_steps=400)
 class SortCubeSO101Env(BaseEnv):
     SUPPORTED_ROBOTS = ["so101"]
     
@@ -38,7 +38,8 @@ class SortCubeSO101Env(BaseEnv):
     def _default_sensor_configs(self):
         """Configure cameras for LeRobot Dataset format.
         - Front camera: 480×640, third-person view
-        - Wrist cameras: 480×640, attached to each arm's camera_link
+        - Left side camera: 480×640, fixed pose on the left side
+        - Right side camera: 480×640, fixed pose on the right side
         """
         configs = []
         
@@ -48,27 +49,17 @@ class SortCubeSO101Env(BaseEnv):
         )
         configs.append(CameraConfig("front", front_pose, 640, 480, np.deg2rad(50), 0.01, 100))
         
-        # Wrist cameras for dual-arm setup
-        # Note: We'll set the mount in _load_agent after agents are loaded
-        # For now, create configs without mount - they'll be updated in _load_agent
-        configs.append(CameraConfig(
-            uid="left_wrist",
-            pose=sapien.Pose(),  # Identity pose - will be mounted to camera_link
-            width=640,
-            height=480,
-            fov=np.deg2rad(50),
-            near=0.01,
-            far=100,
-        ))
-        configs.append(CameraConfig(
-            uid="right_wrist",
-            pose=sapien.Pose(),  # Identity pose - will be mounted to camera_link
-            width=640,
-            height=480,
-            fov=np.deg2rad(50),
-            near=0.01,
-            far=100,
-        ))
+        # Left side camera: fixed pose on the left side, covering top-left and top-middle regions
+        left_side_eye = [-0.215, 0.33, 0.2]  # Left side position (x moved to -0.265)
+        left_side_target = [-0.455, 0.115, 0.05]  # Looking at center between top-left (y=0.17) and top-middle (y=0.0)
+        left_side_pose = sapien_utils.look_at(eye=left_side_eye, target=left_side_target)
+        configs.append(CameraConfig("left_side", left_side_pose, 640, 480, np.deg2rad(50), 0.01, 100))
+        
+        # Right side camera: fixed pose on the right side, covering top-right and top-middle regions
+        right_side_eye = [-0.215, -0.33, 0.2]  # Right side position (x moved to -0.265)
+        right_side_target = [-0.455, -0.115, 0.05]  # Looking at center between top-right (y=-0.17) and top-middle (y=0.0)
+        right_side_pose = sapien_utils.look_at(eye=right_side_eye, target=right_side_target)
+        configs.append(CameraConfig("right_side", right_side_pose, 640, 480, np.deg2rad(50), 0.01, 100))
         
         return configs
     
@@ -83,28 +74,97 @@ class SortCubeSO101Env(BaseEnv):
             sapien.Pose(p=[-0.635, 0.15, 0]), 
             sapien.Pose(p=[-0.635, -0.15, 0])
         ])
-        
-        # Mount wrist cameras to agent camera_links after agents are loaded
-        # agents[0] is left arm, agents[1] is right arm
-        if hasattr(self, 'agent') and hasattr(self.agent, 'agents'):
-            if len(self.agent.agents) >= 2:
-                # Left wrist camera (agent 0)
-                left_agent = self.agent.agents[0]
-                if hasattr(left_agent, 'robot') and 'camera_link' in left_agent.robot.links_map:
-                    left_camera_link = left_agent.robot.links_map['camera_link']
-                    if hasattr(self, '_sensors') and 'left_wrist' in self._sensors:
-                        self._sensors['left_wrist'].mount = left_camera_link
-                
-                # Right wrist camera (agent 1)
-                right_agent = self.agent.agents[1]
-                if hasattr(right_agent, 'robot') and 'camera_link' in right_agent.robot.links_map:
-                    right_camera_link = right_agent.robot.links_map['camera_link']
-                    if hasattr(self, '_sensors') and 'right_wrist' in self._sensors:
-                        self._sensors['right_wrist'].mount = right_camera_link
-
+        # Note: No need to mount cameras - left_side and right_side are fixed pose cameras
     
+    def _initialize_episode(self, env_idx: torch.Tensor, options: dict):
+        """Initialize episode."""
+        with torch.device(self.device):
+            b = len(env_idx)
+            self.table_scene.initialize(env_idx)
+            
+            # Initialize Agents using initialize_agent method
+            self.initialize_agent(env_idx)
+            
+            # Grid parameters (matching _build_boundary_lines)
+            box_inner = 0.16
+            thickness = 0.02
+            grid_start_x = -0.715
+            
+            # Column centers: left (+0.17), middle (0), right (-0.17)
+            middle_col_y = 0.0
+            left_col_y = box_inner + thickness/2  # +0.17
+            right_col_y = -(box_inner + thickness/2)  # -0.17
+            
+            # Row centers: bottom (-0.715 + 0.08), top (-0.715 + 0.08 + 0.18)
+            bottom_row_x = grid_start_x + box_inner/2  # -0.635
+            top_row_x = bottom_row_x + box_inner + thickness  # -0.455
+            
+            # Spawn cubes in middle column, TOP ROW
+            # Ensure minimum 5cm separation between cubes
+            spawn_range = 0.03  # 4cm random range within the cell
+            min_separation = 0.05  # 5cm minimum distance
+            
+            xyz_red = torch.zeros((b, 3))
+            xyz_green = torch.zeros((b, 3))
+            
+            # Generate positions with distance check
+            for i in range(b):
+                max_attempts = 50
+                for attempt in range(max_attempts):
+                    # Red cube position
+                    red_x = top_row_x + (torch.rand(1).item() * 2 - 1) * spawn_range
+                    # red_x = bottom_row_x + torch.rand(1).item() * spawn_range
+                    red_y = middle_col_y + (torch.rand(1).item() * 2 - 1) * spawn_range
+                    
+                    # Green cube position
+                    green_x = top_row_x + (torch.rand(1).item() * 2 - 1) * spawn_range
+                    # green_x = bottom_row_x + torch.rand(1).item() * spawn_range
+                    green_y = middle_col_y + (torch.rand(1).item() * 2 - 1) * spawn_range
+                    
+                    # Check distance (using float math since these are scalars)
+                    distance = ((red_x - green_x)**2 + (red_y - green_y)**2)**0.5
+                    
+                    if distance >= min_separation:
+                        xyz_red[i, 0] = red_x
+                        xyz_red[i, 1] = red_y
+                        xyz_green[i, 0] = green_x
+                        xyz_green[i, 1] = green_y
+                        break
+                else:
+                    # Fallback: place with fixed offset if max attempts exceeded
+                    xyz_red[i, 0] = top_row_x
+                    xyz_red[i, 1] = middle_col_y + min_separation
+                    xyz_green[i, 0] = top_row_x
+                    xyz_green[i, 1] = middle_col_y - min_separation
+            
+            xyz_red[:, 2] = self.cube_half_size
+            xyz_green[:, 2] = self.cube_half_size
+            
+            qs_red = randomization.random_quaternions(b, lock_x=True, lock_y=True, lock_z=self.lock_z)
+            qs_green = randomization.random_quaternions(b, lock_x=True, lock_y=True, lock_z=self.lock_z)
+            
+            self.cube_red.set_pose(Pose.create_from_pq(xyz_red, qs_red))
+            self.cube_green.set_pose(Pose.create_from_pq(xyz_green, qs_green))
+            
+            # Goals in side columns (top row), positioned closer to center for better reachability
+            # Each box is 0.16m wide, left column range ~[0.09, 0.25], right column range ~[-0.25, -0.09]
+            # Place goals at y=±0.10 (still inside boxes but closer to center)
+            goal_offset_y = 0.17  # At inner edge of each box, closest to center
+            
+            # Red goal in right column
+            goal_red_xyz = torch.zeros((b, 3))
+            goal_red_xyz[:, 0] = top_row_x
+            goal_red_xyz[:, 1] = -goal_offset_y  # -0.10 instead of -0.17
+            goal_red_xyz[:, 2] = self.cube_half_size
+            self.goal_red.set_pose(Pose.create_from_pq(goal_red_xyz))
+            
+            # Green goal in left column
+            goal_green_xyz = torch.zeros((b, 3))
+            goal_green_xyz[:, 0] = top_row_x
+            goal_green_xyz[:, 1] = goal_offset_y  # +0.10 instead of +0.17
+            goal_green_xyz[:, 2] = self.cube_half_size
+            self.goal_green.set_pose(Pose.create_from_pq(goal_green_xyz))
 
-    
     def _build_boundary_lines(self):
         """
         Build black boundary boxes to create a 2 rows × 3 columns grid.
@@ -249,99 +309,48 @@ class SortCubeSO101Env(BaseEnv):
             body_type="kinematic", add_collision=False, initial_pose=sapien.Pose()
         )
 
-    def _initialize_episode(self, env_idx: torch.Tensor, options: dict):
-        with torch.device(self.device):
-            b = len(env_idx)
-            self.table_scene.initialize(env_idx)
-            
-            # Initialize Agents using initialize_agent method
-            self.initialize_agent(env_idx)
-            
-            # Grid parameters (matching _build_boundary_lines)
-            box_inner = 0.16
-            thickness = 0.02
-            grid_start_x = -0.715
-            
-            # Column centers: left (+0.17), middle (0), right (-0.17)
-            middle_col_y = 0.0
-            left_col_y = box_inner + thickness/2  # +0.17
-            right_col_y = -(box_inner + thickness/2)  # -0.17
-            
-            # Row centers: bottom (-0.715 + 0.08), top (-0.715 + 0.08 + 0.18)
-            bottom_row_x = grid_start_x + box_inner/2  # -0.635
-            top_row_x = bottom_row_x + box_inner + thickness  # -0.455
-            
-            # Spawn cubes in middle column, TOP ROW
-            # Ensure minimum 5cm separation between cubes
-            spawn_range = 0.03  # 4cm random range within the cell
-            min_separation = 0.05  # 5cm minimum distance
-            
-            xyz_red = torch.zeros((b, 3))
-            xyz_green = torch.zeros((b, 3))
-            
-            # Generate positions with distance check
-            for i in range(b):
-                max_attempts = 50
-                for attempt in range(max_attempts):
-                    # Red cube position
-                    red_x = top_row_x + (torch.rand(1).item() * 2 - 1) * spawn_range
-                    # red_x = bottom_row_x + torch.rand(1).item() * spawn_range
-                    red_y = middle_col_y + (torch.rand(1).item() * 2 - 1) * spawn_range
-                    
-                    # Green cube position
-                    green_x = top_row_x + (torch.rand(1).item() * 2 - 1) * spawn_range
-                    # green_x = bottom_row_x + torch.rand(1).item() * spawn_range
-                    green_y = middle_col_y + (torch.rand(1).item() * 2 - 1) * spawn_range
-                    
-                    # Check distance (using float math since these are scalars)
-                    distance = ((red_x - green_x)**2 + (red_y - green_y)**2)**0.5
-                    
-                    if distance >= min_separation:
-                        xyz_red[i, 0] = red_x
-                        xyz_red[i, 1] = red_y
-                        xyz_green[i, 0] = green_x
-                        xyz_green[i, 1] = green_y
-                        break
-                else:
-                    # Fallback: place with fixed offset if max attempts exceeded
-                    xyz_red[i, 0] = top_row_x
-                    xyz_red[i, 1] = middle_col_y + min_separation
-                    xyz_green[i, 0] = top_row_x
-                    xyz_green[i, 1] = middle_col_y - min_separation
-            
-            xyz_red[:, 2] = self.cube_half_size
-            xyz_green[:, 2] = self.cube_half_size
-            
-            qs_red = randomization.random_quaternions(b, lock_x=True, lock_y=True, lock_z=self.lock_z)
-            qs_green = randomization.random_quaternions(b, lock_x=True, lock_y=True, lock_z=self.lock_z)
-            
-            self.cube_red.set_pose(Pose.create_from_pq(xyz_red, qs_red))
-            self.cube_green.set_pose(Pose.create_from_pq(xyz_green, qs_green))
-            
-            # Goals in side columns (top row), positioned closer to center for better reachability
-            # Each box is 0.16m wide, left column range ~[0.09, 0.25], right column range ~[-0.25, -0.09]
-            # Place goals at y=±0.10 (still inside boxes but closer to center)
-            goal_offset_y = 0.17  # At inner edge of each box, closest to center
-            
-            # Red goal in right column
-            goal_red_xyz = torch.zeros((b, 3))
-            goal_red_xyz[:, 0] = top_row_x
-            goal_red_xyz[:, 1] = -goal_offset_y  # -0.10 instead of -0.17
-            goal_red_xyz[:, 2] = self.cube_half_size
-            self.goal_red.set_pose(Pose.create_from_pq(goal_red_xyz))
-            
-            # Green goal in left column
-            goal_green_xyz = torch.zeros((b, 3))
-            goal_green_xyz[:, 0] = top_row_x
-            goal_green_xyz[:, 1] = goal_offset_y  # +0.10 instead of +0.17
-            goal_green_xyz[:, 2] = self.cube_half_size
-            self.goal_green.set_pose(Pose.create_from_pq(goal_green_xyz))
-
     def evaluate(self):
-        red_to_goal = torch.linalg.norm(self.cube_red.pose.p - self.goal_red.pose.p, axis=1)
-        green_to_goal = torch.linalg.norm(self.cube_green.pose.p - self.goal_green.pose.p, axis=1)
+        """
+        Evaluate success based on region placement:
+        - Green cube should be in top-left region
+        - Red cube should be in top-right region
+        """
+        # Grid parameters (matching _build_boundary_lines and _initialize_episode)
+        box_inner = 0.16
+        thickness = 0.02
+        grid_start_x = -0.715
         
-        success = (red_to_goal < self.goal_thresh) & (green_to_goal < self.goal_thresh)
+        # Calculate top row X boundaries
+        row_separator_x = grid_start_x + box_inner + thickness
+        x_shift = -thickness
+        row_separator_x_shifted = row_separator_x + x_shift  # -0.555
+        total_height = box_inner * 2 + thickness * 3
+        grid_end_x = grid_start_x + total_height
+        grid_end_x_shifted = grid_end_x + x_shift - thickness  # -0.375
+        
+        # Calculate column Y boundaries
+        left_middle_y = box_inner/2 + thickness/2  # 0.09 (left-middle separator)
+        total_width = box_inner * 3 + thickness * 4
+        top_left_y = total_width / 2  # 0.28 (top-left edge)
+        top_right_y = -total_width / 2  # -0.28 (top-right edge)
+        middle_right_y = -(box_inner/2 + thickness/2)  # -0.09 (middle-right separator)
+        
+        # Get cube positions
+        red_pos = self.cube_red.pose.p  # Shape: (batch_size, 3)
+        green_pos = self.cube_green.pose.p  # Shape: (batch_size, 3)
+        
+        # Check if cubes are in top row (X coordinate check)
+        in_top_row_red = (red_pos[:, 0] >= row_separator_x_shifted) & (red_pos[:, 0] <= grid_end_x_shifted)
+        in_top_row_green = (green_pos[:, 0] >= row_separator_x_shifted) & (green_pos[:, 0] <= grid_end_x_shifted)
+        
+        # Check if red cube is in top-right region (Y coordinate check)
+        in_top_right_red = (red_pos[:, 1] >= top_right_y) & (red_pos[:, 1] <= middle_right_y)
+        
+        # Check if green cube is in top-left region (Y coordinate check)
+        in_top_left_green = (green_pos[:, 1] >= left_middle_y) & (green_pos[:, 1] <= top_left_y)
+        
+        # Success: both cubes in top row, red in right column, green in left column
+        success = in_top_row_red & in_top_row_green & in_top_right_red & in_top_left_green
         
         return {
             "success": success,

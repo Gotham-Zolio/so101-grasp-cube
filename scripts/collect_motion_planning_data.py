@@ -9,7 +9,6 @@ This script:
 
 Key features:
 - Records joint positions (not end-effector poses) as actions
-- Can apply camera distortion to front camera images (during conversion)
 - Supports domain randomization (via environment randomization)
 """
 
@@ -26,6 +25,7 @@ import os.path as osp
 from mani_skill.utils.wrappers.flatten import FlattenActionSpaceWrapper
 from mani_skill.utils.wrappers.record import RecordEpisode
 from grasp_cube.motionplanning.so101.solutions import solveLiftCube, solveStackCube, solveSortCube
+from grasp_cube.motionplanning.so101.solutions.avoid_obstacle import solve as solveAvoidObstacle
 
 
 # Task prompts
@@ -33,6 +33,7 @@ TASK_PROMPTS = {
     "LiftCubeSO101-v1": "Pick up the red cube and lift it.",
     "StackCubeSO101-v1": "Stack the red cube on top of the green cube.",
     "SortCubeSO101-v1": "Move the red cube to the left region and the green cube to the right region.",
+    "AvoidObstacleSO101-v1": "Lift the red cube over obstacles to the middle. Lift the green cube over obstacles to the middle.",
 }
 
 # Motion planning solutions
@@ -40,6 +41,7 @@ MP_SOLUTIONS = {
     "LiftCubeSO101-v1": solveLiftCube,
     "StackCubeSO101-v1": solveStackCube,
     "SortCubeSO101-v1": solveSortCube,
+    "AvoidObstacleSO101-v1": solveAvoidObstacle,
 }
 
 
@@ -63,12 +65,6 @@ def parse_args():
         type=str,
         default="./datasets",
         help="Output directory for datasets"
-    )
-    parser.add_argument(
-        "--apply-distortion",
-        action="store_true",
-        default=True,
-        help="Apply camera distortion to front camera images (recommended for sim-to-real)"
     )
     parser.add_argument(
         "--domain-randomization",
@@ -120,10 +116,10 @@ def get_robot_state(env, agent_idx: Optional[int] = None) -> np.ndarray:
     return state[0] if state.shape[0] == 1 else state  # Remove batch dimension if b=1
 
 
-def get_camera_images(env, apply_distortion_to_front: bool = True) -> Dict[str, np.ndarray]:
+def get_camera_images(env) -> Dict[str, np.ndarray]:
     """
     Get camera images from environment.
-    Returns dict with 'front', 'left_wrist', 'right_wrist' images.
+    Returns dict with 'front', 'left_side', 'right_side' images.
     """
     env_unwrapped = env.unwrapped
     images = {}
@@ -143,60 +139,40 @@ def get_camera_images(env, apply_distortion_to_front: bool = True) -> Dict[str, 
             else:
                 front_img = front_img.astype(np.uint8)
         
-        # Apply distortion if requested
-        if apply_distortion_to_front:
-            front_img = apply_distortion(front_img)
-        
         images['front'] = front_img
     else:
         # Fallback: render from default camera
         # This is a placeholder - actual implementation may vary
         images['front'] = np.zeros((480, 640, 3), dtype=np.uint8)
     
-    # Get wrist camera images from sensors
-    # Note: Wrist cameras are defined in SO101 agent class as "wrist_camera"
-    # For dual-arm tasks, each agent has its own "wrist_camera"
-    # We need to map them to "left_wrist" and "right_wrist" based on agent index
+    # Get side camera images (left_side and right_side) - fixed pose cameras
+    # All tasks (lift, stack, sort) use the same three cameras: front + left_side + right_side
     if hasattr(env_unwrapped, 'sensors'):
-        # Check if we have multiple agents (dual-arm) or single agent (single-arm)
-        if hasattr(env_unwrapped, 'agent') and hasattr(env_unwrapped.agent, 'agents'):
-            # Dual-arm setup: agents[0] is left, agents[1] is right
-            # Each agent has its own wrist_camera sensor
-            # For now, we'll try to get from sensors dict directly
-            # The sensor name might be prefixed with agent index
-            left_wrist_img = None
-            right_wrist_img = None
-            
-            # Try different possible sensor names
-            for sensor_name in env_unwrapped.sensors.keys():
-                if 'wrist' in sensor_name.lower() or 'camera' in sensor_name.lower():
-                    if 'left' in sensor_name.lower() or sensor_name.endswith('_0') or sensor_name.startswith('0_'):
-                        left_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
-                    elif 'right' in sensor_name.lower() or sensor_name.endswith('_1') or sensor_name.startswith('1_'):
-                        right_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
-                    elif left_wrist_img is None:
-                        # First wrist camera found, assume it's left (for dual-arm)
-                        left_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
-                    elif right_wrist_img is None:
-                        # Second wrist camera found, assume it's right
-                        right_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
-            
-            images['left_wrist'] = left_wrist_img if left_wrist_img is not None else np.zeros((480, 640, 3), dtype=np.uint8)
-            images['right_wrist'] = right_wrist_img if right_wrist_img is not None else np.zeros((480, 640, 3), dtype=np.uint8)
+        # Left side camera
+        if 'left_side' in env_unwrapped.sensors:
+            try:
+                left_side_img = _get_image_from_sensor(env_unwrapped.sensors['left_side'])
+                images['left_side'] = left_side_img
+            except Exception as e:
+                print(f"Warning: Failed to get left_side from sensors: {e}")
+                images['left_side'] = np.zeros((480, 640, 3), dtype=np.uint8)
         else:
-            # Single-arm setup: only right_wrist camera
-            right_wrist_img = None
-            for sensor_name in env_unwrapped.sensors.keys():
-                if 'wrist' in sensor_name.lower() or 'camera' in sensor_name.lower():
-                    right_wrist_img = _get_image_from_sensor(env_unwrapped.sensors[sensor_name])
-                    break
-            
-            images['left_wrist'] = np.zeros((480, 640, 3), dtype=np.uint8)
-            images['right_wrist'] = right_wrist_img if right_wrist_img is not None else np.zeros((480, 640, 3), dtype=np.uint8)
+            images['left_side'] = np.zeros((480, 640, 3), dtype=np.uint8)
+        
+        # Right side camera
+        if 'right_side' in env_unwrapped.sensors:
+            try:
+                right_side_img = _get_image_from_sensor(env_unwrapped.sensors['right_side'])
+                images['right_side'] = right_side_img
+            except Exception as e:
+                print(f"Warning: Failed to get right_side from sensors: {e}")
+                images['right_side'] = np.zeros((480, 640, 3), dtype=np.uint8)
+        else:
+            images['right_side'] = np.zeros((480, 640, 3), dtype=np.uint8)
     else:
         # Fallback: use placeholders if sensors not available
-        images['left_wrist'] = np.zeros((480, 640, 3), dtype=np.uint8)
-        images['right_wrist'] = np.zeros((480, 640, 3), dtype=np.uint8)
+        images['left_side'] = np.zeros((480, 640, 3), dtype=np.uint8)
+        images['right_side'] = np.zeros((480, 640, 3), dtype=np.uint8)
 
 
 def _get_image_from_sensor(sensor):
@@ -219,10 +195,9 @@ class DataCollectionWrapper:
     Wrapper to collect observations and actions during motion planning execution.
     Records data in LeRobot Dataset format.
     """
-    def __init__(self, env, env_id: str, apply_distortion_to_front: bool = True):
+    def __init__(self, env, env_id: str):
         self.env = env
         self.env_id = env_id
-        self.apply_distortion_to_front = apply_distortion_to_front
         self.task_prompt = TASK_PROMPTS.get(env_id, "")
         self.episode_data = []
         self.current_step = 0
@@ -244,11 +219,11 @@ class DataCollectionWrapper:
             "step": self.current_step,
         }
         
-        # Add wrist camera images if available
-        if "left_wrist" in obs_before:
-            data_point["observation.images.left_wrist"] = obs_before["left_wrist"]
-        if "right_wrist" in obs_before:
-            data_point["observation.images.right_wrist"] = obs_before["right_wrist"]
+        # Add side camera images (all tasks use front + left_side + right_side)
+        if "left_side" in obs_before:
+            data_point["observation.images.left_side"] = obs_before["left_side"]
+        if "right_side" in obs_before:
+            data_point["observation.images.right_side"] = obs_before["right_side"]
         
         self.episode_data.append(data_point)
         self.current_step += 1
@@ -264,7 +239,7 @@ class DataCollectionWrapper:
     
     def _get_observation(self) -> Dict[str, np.ndarray]:
         """Get current observation with images."""
-        images = get_camera_images(self.env, self.apply_distortion_to_front)
+        images = get_camera_images(self.env)
         return images
     
     def get_episode_data(self) -> list:
@@ -319,13 +294,30 @@ def main():
         print(f"Available sensors: {list(env_unwrapped.sensors.keys()) if isinstance(env_unwrapped.sensors, dict) else 'not a dict'}")
     
     # Test: Get one observation to verify sensor_data is available
+    # IMPORTANT: For dual-arm tasks, ensure cameras are mounted after reset
     test_obs, _ = env.reset(seed=42)
+    
+    # After reset, verify cameras are available
+    # Note: All tasks now use fixed-pose cameras (front, left_side, right_side), no mounting needed
+    env_unwrapped = env.unwrapped
+    
     test_obs_dict = env.get_obs()
     print(f"Test obs_dict keys: {list(test_obs_dict.keys())}")
     if "sensor_data" in test_obs_dict:
         print(f"✓ sensor_data is available in get_obs()")
         if isinstance(test_obs_dict["sensor_data"], dict):
-            print(f"  sensor_data keys: {list(test_obs_dict['sensor_data'].keys())}")
+            sensor_keys = list(test_obs_dict['sensor_data'].keys())
+            print(f"  sensor_data keys: {sensor_keys}")
+            # Verify all three cameras (front, left_side, right_side) are present
+            expected_cameras = ['front', 'left_side', 'right_side']
+            missing_cameras = [cam for cam in expected_cameras if cam not in sensor_keys]
+            if not missing_cameras:
+                print(f"  ✓ All cameras are available: {expected_cameras}")
+            else:
+                print(f"  ⚠️  WARNING: Missing cameras in sensor_data!")
+                print(f"     Expected: {expected_cameras}")
+                print(f"     Missing: {missing_cameras}")
+                print(f"     Got: {sensor_keys}")
     else:
         print(f"⚠️  WARNING: sensor_data NOT in get_obs()!")
         print(f"  This means RecordEpisode will NOT save images!")
@@ -339,7 +331,6 @@ def main():
     print(f"Target: {args.num_episodes} successful episodes")
     print(f"Output directory: {traj_output_dir}")
     print(f"Task prompt: {task_prompt}")
-    print(f"Apply distortion: {args.apply_distortion} (will be applied during conversion)")
     print(f"Domain randomization: {args.domain_randomization}")
     print("\nNote: Trajectories are saved in ManiSkill format.")
     print("Use convert_trajectory_to_lerobot.py to convert to LeRobot Dataset format.")
