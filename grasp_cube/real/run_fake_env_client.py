@@ -87,9 +87,12 @@ def main(args: Args):
                 response = client.infer(obs)
                 print(f"  [DEBUG] Response type: {type(response)}")
                 
-                # Response should be a list of lists: [[action1], [action2], ...]
-                action_list = response
-                print(f"  [DEBUG] action_list type: {type(action_list)}, len: {len(action_list) if hasattr(action_list, '__len__') else 'N/A'}")
+                # Response should have 'action' key if it's a dict, or be a raw list
+                if isinstance(response, dict):
+                    action_list = response.get("action", response)
+                else:
+                    action_list = response
+                print(f"  [DEBUG] action_list type: {type(action_list)}")
                 
                 action_chunk = np.array(action_list)  # Convert list to numpy array
                 print(f"  [DEBUG] action_chunk shape: {action_chunk.shape}, ndim: {action_chunk.ndim}")

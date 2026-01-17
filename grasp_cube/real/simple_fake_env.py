@@ -9,6 +9,7 @@ import dataclasses
 import gymnasium as gym
 import numpy as np
 import time
+import pathlib
 from typing import Any, SupportsFloat
 
 
@@ -32,6 +33,10 @@ class SimpleFakeEnv(gym.Env):
         super().__init__()
         self.config = config
         self.task = config.task
+        
+        # Create run_dir for compatibility with other environments
+        self.run_dir = pathlib.Path("/tmp/simple_fake_env_runs")
+        self.run_dir.mkdir(parents=True, exist_ok=True)
         
         # Determine dimensions based on task
         if self.task in ["lift", "stack"]:
