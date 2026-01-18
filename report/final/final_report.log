@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 19:06
+This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 22:59
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -249,6 +249,11 @@ LaTeX Info: Redefining \[ on input line 2953.
 LaTeX Info: Redefining \] on input line 2954.
 ) (d:/texlive/2024/texmf-dist/tex/latex/amsfonts/amssymb.sty
 Package: amssymb 2013/01/14 v3.01 AMS font symbols
+) (d:/texlive/2024/texmf-dist/tex/latex/wasysym/wasysym.sty
+Package: wasysym 2020/01/19 v2.4 Wasy-2 symbol support package
+\symwasy=\mathgroup8
+LaTeX Font Info:    Overwriting symbol font `wasy' in version `bold'
+(Font)                  U/wasy/m/n --> U/wasy/b/n on input line 93.
 ) (d:/texlive/2024/texmf-dist/tex/latex/wrapfig/wrapfig.sty
 \wrapoverhang=\dimen174
 \WF@size=\dimen175
@@ -434,7 +439,7 @@ Package: titlesec 2023/10/27 v2.16 Sectioning titles
 \titlewidthlast=\dimen196
 \titlewidthfirst=\dimen197
 )
-LaTeX Font Info:    Trying to load font information for T1+ptm on input line 74.
+LaTeX Font Info:    Trying to load font information for T1+ptm on input line 75.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/t1ptm.fd
 File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 ) (d:/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-xetex.def
@@ -447,30 +452,30 @@ File: l3backend-xetex.def 2024-02-20 L3 backend support: XeTeX
 ) (./final_report.aux)
 \openout1 = `final_report.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 74.
-LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 74.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 75.
+LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 75.
  (d:/texlive/2024/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 74.
-LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 75.
+LaTeX Font Info:    ... okay on input line 75.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: xetex
@@ -506,12 +511,12 @@ LaTeX Font Info:    ... okay on input line 74.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 74.
-Package microtype Info: Applying patch `item' on input line 74.
-Package microtype Info: Applying patch `toc' on input line 74.
-Package microtype Info: Applying patch `eqnum' on input line 74.
-Package microtype Info: Applying patch `footnote' on input line 74.
-Package microtype Info: Applying patch `verbatim' on input line 74.
+LaTeX Info: Redefining \microtypecontext on input line 75.
+Package microtype Info: Applying patch `item' on input line 75.
+Package microtype Info: Applying patch `toc' on input line 75.
+Package microtype Info: Applying patch `eqnum' on input line 75.
+Package microtype Info: Applying patch `footnote' on input line 75.
+Package microtype Info: Applying patch `verbatim' on input line 75.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
 Package microtype Info: No adjustment of tracking.
@@ -525,12 +530,12 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
 \c@lstlisting=\count311
-Package hyperref Info: Link coloring ON on input line 74.
+Package hyperref Info: Link coloring ON on input line 75.
  (./final_report.out) (./final_report.out)
 \@outlinefile=\write3
 \openout3 = `final_report.out'.
 
-LaTeX Font Info:    Trying to load font information for OT1+ztmcm on input line 77.
+LaTeX Font Info:    Trying to load font information for OT1+ztmcm on input line 78.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
 File: ot1ztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OT1/ztmcm.
 )
@@ -538,32 +543,36 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `ztmcm' (encoding: OT1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    Trying to load font information for OML+ztmcm on input line 77.
+LaTeX Font Info:    Trying to load font information for OML+ztmcm on input line 78.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/omlztmcm.fd
 File: omlztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OML/ztmcm.
 )
-LaTeX Font Info:    Trying to load font information for OMS+ztmcm on input line 77.
+LaTeX Font Info:    Trying to load font information for OMS+ztmcm on input line 78.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/omsztmcm.fd
 File: omsztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMS/ztmcm.
 )
-LaTeX Font Info:    Trying to load font information for OMX+ztmcm on input line 77.
+LaTeX Font Info:    Trying to load font information for OMX+ztmcm on input line 78.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/omxztmcm.fd
 File: omxztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMX/ztmcm.
 )
-LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 77.
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 78.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 77.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 78.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 77.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 78.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 77.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 78.
  (d:/texlive/2024/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 ) (d:/texlive/2024/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
+)
+LaTeX Font Info:    Trying to load font information for U+wasy on input line 78.
+ (d:/texlive/2024/texmf-dist/tex/latex/wasysym/uwasy.fd
+File: uwasy.fd 2020/01/19 v2.4 Wasy-2 symbol font definitions
 ) (./final_report.toc
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 2.
@@ -571,39 +580,51 @@ LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7.4> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 2.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <6> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 2.
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-[1
-
-])
+)
 \tf@toc=\write4
 \openout4 = `final_report.toc'.
 
- [2]
-Overfull \hbox (0.72356pt too wide) in paragraph at lines 91--92
+ [1
+
+]
+Overfull \hbox (0.72356pt too wide) in paragraph at lines 92--93
 \T1/ptm/m/n/10 proper cam-era con-fig-u-ra-tions and robot dy-nam-ics. \T1/ptm/m/it/10 (See: grasp_cube/envs/tasks/lift_cube_so101.py,
  []
 
 
-Overfull \hbox (50.28212pt too wide) in paragraph at lines 93--94
+Overfull \hbox (50.28212pt too wide) in paragraph at lines 94--95
 \T1/ptm/m/n/10 tion se-quence pre-dic-tion. \T1/ptm/m/it/10 (See: script-s/-train_act_real_data.py, script-s/-train_act_real_data_lerobot_dataset.py) 
  []
 
 
-Overfull \hbox (8.85327pt too wide) in paragraph at lines 96--97
+Overfull \hbox (8.85327pt too wide) in paragraph at lines 97--98
 \T1/ptm/m/n/10 duc-tion de-ploy-ment. \T1/ptm/m/it/10 (See: grasp_cube/real/serve_act_policy.py, grasp_cube/real/run_env_client.py) 
  []
 
-LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 121.
-(d:/texlive/2024/texmf-dist/tex/latex/psnfss/ts1ptm.fd
-File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
-) [3]
-Overfull \hbox (6.29227pt too wide) in paragraph at lines 148--149
-[]\T1/ptm/b/n/10 Dynamic Nor-mal-iza-tion\T1/ptm/m/n/10 : Man-ual nor-mal-iza-tion/-de-nor-mal-iza-tion us-ing statis-tics (mean, std) loaded
+
+Overfull \hbox (30.94281pt too wide) in paragraph at lines 107--108
+\T1/ptm/m/n/10 dataset for-mat and pol-icy train-ing pipeline. \T1/ptm/m/it/10 (See: grasp_cube/envs/tasks/lift_cube_so101.py, sort_cube_so101.py,
  []
 
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 181.
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 181.
+
+Overfull \hbox (78.20308pt too wide) in paragraph at lines 110--111
+\T1/ptm/m/n/10 space. The red cube spawns ran-domly in the right arm's workspace re-gion. \T1/ptm/m/it/10 (grasp_cube/envs/tasks/lift_cube_so101.py) 
+ []
+
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 119.
+(d:/texlive/2024/texmf-dist/tex/latex/psnfss/ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+) [2]
+File: figs/stack.png Graphic file (type bmp)
+<figs/stack.png>
+File: figs/sort.png Graphic file (type bmp)
+<figs/sort.png>
+File: figs/custom_task.png Graphic file (type bmp)
+<figs/custom_task.png>
+
+Missing character: There is no → ("2192) in font ptmr8t!
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 199.
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 199.
 (d:/texlive/2024/texmf-dist/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
@@ -615,280 +636,82 @@ Package microtype Info: Loading generic protrusion settings for font family
 
 Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
-[4]
-Missing character: There is no ✓ ("2713) in font ptmb8t!
+[3]
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 230.
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-
-Overfull \hbox (104.32361pt too wide) in paragraph at lines 248--249
-\T1/ptm/m/n/10 ac-tions and ex-e-cute them one at a time for tem-po-ral con-sis-tency. This is im-ple-mented in \T1/pcr/m/n/10 grasp_cube/real/act_policy.py\T1/ptm/m/n/10 . 
- []
-
-[5]
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✗ ("2717) in font ptmr8t!
-
-Package inputenc Warning: inputenc package ignored with utf8 based engines.
-
-Missing character: There is no 固 ("56FA) in font pcrr8t!
-Missing character: There is no 定 ("5B9A) in font pcrr8t!
-Missing character: There is no 长 ("957F) in font pcrr8t!
-Missing character: There is no 度 ("5EA6) in font pcrr8t!
-Missing character: There is no 窗 ("7A97) in font pcrr8t!
-Missing character: There is no 口 ("53E3) in font pcrr8t!
-Missing character: There is no 滑 ("6ED1) in font pcrr8t!
-Missing character: There is no 动 ("52A8) in font pcrr8t!
-Missing character: There is no 窗 ("7A97) in font pcrr8t!
-Missing character: There is no 口 ("53E3) in font pcrr8t!
-Missing character: There is no 步 ("6B65) in font pcrr8t!
-Missing character: There is no 长 ("957F) in font pcrr8t!
-[6]
-Overfull \hbox (30.94281pt too wide) in paragraph at lines 363--364
-\T1/ptm/m/n/10 dataset for-mat and pol-icy train-ing pipeline. \T1/ptm/m/it/10 (See: grasp_cube/envs/tasks/lift_cube_so101.py, sort_cube_so101.py,
- []
-
-
-Overfull \hbox (78.20308pt too wide) in paragraph at lines 366--367
-\T1/ptm/m/n/10 space. The red cube spawns ran-domly in the right arm's workspace re-gion. \T1/ptm/m/it/10 (grasp_cube/envs/tasks/lift_cube_so101.py) 
- []
-
-
-Overfull \hbox (4.08221pt too wide) in paragraph at lines 383--384
-\T1/ptm/m/n/10 data col-lec-tion. The tra-jec-tory col-lec-tion pro-cess in-cludes: \T1/ptm/m/it/10 (See: script-s/-col-lect_motion_planning_data.py,
- []
-
-[7]
-Overfull \hbox (36.46213pt too wide) in paragraph at lines 411--412
-[]\T1/ptm/m/n/10 These statis-tics can be viewed by run-ning the data col-lec-tion scripts \T1/ptm/m/it/10 (script-s/-col-lect_motion_planning_data.py)\T1/ptm/m/n/10 . 
- []
-
-[8]
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-[9]
-Overfull \hbox (3.85255pt too wide) in paragraph at lines 552--553
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 236.
+ [4]
+File: figs/real_robot_train_loss.png Graphic file (type bmp)
+<figs/real_robot_train_loss.png>
+ [5]
+Overfull \hbox (3.85255pt too wide) in paragraph at lines 356--357
 []\T1/ptm/b/n/10 Modeling Non-deterministic Be-hav-iors: \T1/ptm/m/n/10 It uti-lizes a Con-di-tional Vari-a-tional Au-toen-coder (CVAE)
  []
 
 Missing character: There is no — ("2014) in font ptmr8t!
 Missing character: There is no — ("2014) in font ptmr8t!
 
-Overfull \hbox (180.02428pt too wide) in paragraph at lines 568--569
+Overfull \hbox (180.02428pt too wide) in paragraph at lines 372--373
 []\T1/ptm/m/n/10 To ad-dress this lim-i-ta-tion, we im-ple-mented a cus-tom \T1/pcr/m/n/10 VisualAugmentation \T1/ptm/m/n/10 mod-ule in \T1/pcr/m/n/10 grasp_cube/utils/data_augmentation.py
  []
 
 
-Overfull \hbox (7.5833pt too wide) in paragraph at lines 574--575
+Overfull \hbox (7.5833pt too wide) in paragraph at lines 378--379
 []\T1/ptm/b/n/10 Color Jit-ter: \T1/ptm/m/n/10 Ran-dom ad-just-ments to bright-ness ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ), con-trast ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ), sat-u-ra-tion ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ),
  []
 
-[10]
+[6] [7]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 611.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 611.
+(hyperref)                removing `math shift' on input line 432.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 611.
+(hyperref)                removing `subscript' on input line 432.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 632.
+(hyperref)                removing `math shift' on input line 432.
 
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 632.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 632.
-
-[11]
-Overfull \hbox (49.2046pt too wide) in paragraph at lines 666--667
+Overfull \hbox (49.2046pt too wide) in paragraph at lines 463--464
 []\T1/ptm/m/n/10 Policy Server: Runs on GPU ma-chine, han-dles in-fer-ence (\T1/pcr/m/n/10 grasp_cube/real/serve_act_policy.py\T1/ptm/m/n/10 ) 
  []
 
 
-Overfull \hbox (93.47433pt too wide) in paragraph at lines 667--668
+Overfull \hbox (93.47433pt too wide) in paragraph at lines 464--465
 []\T1/ptm/m/n/10 Robot Client: Runs on robot ma-chine, han-dles en-vi-ron-ment in-ter-ac-tion (\T1/pcr/m/n/10 grasp_cube/real/run_env_client.py\T1/ptm/m/n/10 ) 
  []
 
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-[12]
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-(d:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
-File: lstlang1.sty 2024/02/21 1.10 listings language file
-) (d:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
-File: lstlang1.sty 2024/02/21 1.10 listings language file
-)
-
-Package inputenc Warning: inputenc package ignored with utf8 based engines.
-
-[13]
-
-Package inputenc Warning: inputenc package ignored with utf8 based engines.
-
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no ├ ("251C) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-
-Overfull \hbox (152.86502pt too wide) in paragraph at lines 862--863
-[]\T1/ptm/m/n/10 The ac-tual im-ple-men-ta-tion is avail-able in \T1/pcr/m/n/10 grasp_cube/real/act_policy.py \T1/ptm/m/n/10 and \T1/pcr/m/n/10 grasp_cube/real/run_env_client.py\T1/ptm/m/n/10 . 
- []
-
-[14]
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-
-Overfull \hbox (56.06355pt too wide) in paragraph at lines 936--937
+[8]
+Overfull \hbox (56.06355pt too wide) in paragraph at lines 506--507
 []\T1/ptm/b/n/10 ACT Pol-icy Im-ple-men-ta-tion\T1/ptm/m/n/10 : Com-plete 417-line im-ple-men-ta-tion in \T1/pcr/m/n/10 grasp_cube/real/act_policy.py
  []
 
-[15]
-Overfull \hbox (113.27388pt too wide) in paragraph at lines 937--938
+
+Overfull \hbox (113.27388pt too wide) in paragraph at lines 507--508
 []\T1/ptm/b/n/10 Server-Client Ar-chi-tec-ture\T1/ptm/m/n/10 : WebSocket-based com-mu-ni-ca-tion sys-tem in \T1/pcr/m/n/10 grasp_cube/real/serve_act_policy.py
  []
 
 
-Overfull \hbox (98.80449pt too wide) in paragraph at lines 939--940
+Overfull \hbox (98.80449pt too wide) in paragraph at lines 509--510
 []\T1/ptm/b/n/10 Monitoring In-fras-truc-ture\T1/ptm/m/n/10 : Com-pre-hen-sive log-ging and mon-i-tor-ing in \T1/pcr/m/n/10 grasp_cube/real/monitor_wrapper.py 
  []
 
-[16] [17] (./final_report.aux)
+[9] (./final_report.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
 Package rerunfilecheck Info: File `final_report.out' has not changed.
-(rerunfilecheck)             Checksum: E66215B478133B0AC1835269BB97E80E;14417.
+(rerunfilecheck)             Checksum: 154D0CA85674A3270E68A0C6C80FEF75;5956.
  ) 
 Here is how much of TeX's memory you used:
- 16097 strings out of 476720
- 253599 string characters out of 5801443
- 2218842 words of memory out of 5000000
- 37907 multiletter control sequences out of 15000+600000
- 610249 words of font info for 116 fonts, out of 8000000 for 9000
+ 16235 strings out of 476720
+ 255519 string characters out of 5801443
+ 2029842 words of memory out of 5000000
+ 38031 multiletter control sequences out of 15000+600000
+ 605921 words of font info for 117 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
  72i,10n,79p,1052b,1900s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on final_report.pdf (17 pages).
+Output written on final_report.pdf (9 pages).
