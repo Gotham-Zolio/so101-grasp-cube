@@ -15,17 +15,16 @@
 \contentsline {subsection}{\numberline {3.3}Self-Defined Problem: MULTI-HURDLES}{7}{subsection.3.3}%
 \contentsline {subsubsection}{\numberline {3.3.1}Task Description}{7}{subsubsection.3.3.1}%
 \contentsline {subsubsection}{\numberline {3.3.2}Task Complexity Analysis}{7}{subsubsection.3.3.2}%
-\contentsline {subsection}{\numberline {3.4}Implementation and Results}{7}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.4}Implementation and Results}{8}{subsection.3.4}%
 \contentsline {subsubsection}{\numberline {3.4.1}Analysis and Generalization ($c_{analysis}$)}{8}{subsubsection.3.4.1}%
-\contentsline {section}{\numberline {4}Real Robot Deployment Framework}{8}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Deployment Architecture}{8}{subsection.4.1}%
-\contentsline {subsubsection}{\numberline {4.1.1}Server-Client Design Pattern}{8}{subsubsection.4.1.1}%
-\contentsline {subsubsection}{\numberline {4.1.2}Integration Layers}{8}{subsubsection.4.1.2}%
-\contentsline {section}{\numberline {5}Experimental Results and Evaluation}{8}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Simulation Performance Results}{8}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Real Robot Integration Status}{9}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Software Quality Metrics}{9}{subsection.5.3}%
-\contentsline {section}{\numberline {6}Conclusion}{9}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Project Achievements}{9}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Key Technical Insights}{9}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Reproducibility and Documentation}{9}{subsection.6.3}%
+\contentsline {subsection}{\numberline {3.5}Grading Summary ($c_{method}, c_{success}, c_{analysis}$)}{8}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Analysis ($c_{analysis}$)}{9}{subsection.3.6}%
+\contentsline {section}{\numberline {4}Real Robot Deployment Framework}{9}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Deployment Architecture}{9}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Server-Client Design Pattern}{9}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}Integration Layers}{9}{subsubsection.4.1.2}%
+\contentsline {section}{\numberline {5}Experimental Results and Evaluation}{9}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Simulation Performance Results}{9}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Real Robot Integration Status}{10}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Software Quality Metrics}{10}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Conclusion}{10}{section.6}%

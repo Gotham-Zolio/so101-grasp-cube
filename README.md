@@ -759,3 +759,11 @@ Access monitoring dashboard at `http://localhost:9000` to view real-time executi
 1. **Domain Randomization**: Add lighting, texture randomization during data collection.
 2. **Action Chunking**: Tune chunk_size per task to balance latency and performance.
 3. **Hyperparameter Tuning**: Adjust learning rate, batch size, etc. on a validation set.
+
+---
+
+## Repository
+
+**GitHub Repository**: [https://github.com/Gotham-Zolio/so101-grasp-cube](https://github.com/Gotham-Zolio/so101-grasp-cube)
+
+This repository contains all the code, documentation, and trained models for the SO-101 ACT grasping project.

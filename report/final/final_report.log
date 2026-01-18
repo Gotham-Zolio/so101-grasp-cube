@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 22:59
+This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 23:29
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -659,59 +659,111 @@ Overfull \hbox (7.5833pt too wide) in paragraph at lines 378--379
 []\T1/ptm/b/n/10 Color Jit-ter: \T1/ptm/m/n/10 Ran-dom ad-just-ments to bright-ness ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ), con-trast ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ), sat-u-ra-tion ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ),
  []
 
-[6] [7]
+[6]
+
+Package inputenc Warning: inputenc package ignored with utf8 based engines.
+
+[7]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 432.
+(hyperref)                removing `math shift' on input line 465.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 432.
+(hyperref)                removing `subscript' on input line 465.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 432.
+(hyperref)                removing `math shift' on input line 465.
 
 
-Overfull \hbox (49.2046pt too wide) in paragraph at lines 463--464
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 469.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 469.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 469.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 469.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 469.
+
+
+Overfull \hbox (8.2849pt too wide) in paragraph at lines 471--472
+\T1/ptm/m/n/10 We self-assess ac-cord-ing to the given cri-te-ria. \T1/ptm/b/n/10 Data: \T1/pcr/m/n/10 eval_results/baseline_no_disturbance\T1/ptm/m/n/10 ,
+ []
+
+
+Overfull \hbox (42.20715pt too wide) in paragraph at lines 471--472
+\T1/pcr/m/n/10 baseline_with_disturbance\T1/ptm/m/n/10 , \T1/pcr/m/n/10 augmented_no_disturbance\T1/ptm/m/n/10 , \T1/pcr/m/n/10 augmented_with_disturbance
+ []
+
+
+Overfull \hbox (66.5755pt too wide) in paragraph at lines 477--478
+[]\T1/ptm/b/n/10 Difference from code-base (0.5 pt): \T1/ptm/m/n/10 We add an on-line \T1/pcr/m/n/10 VisualAugmentation \T1/ptm/m/n/10 in \T1/pcr/m/n/10 ACTPolicy.forward
+ []
+
+[8]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 486.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 486.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 486.
+
+
+Overfull \hbox (49.2046pt too wide) in paragraph at lines 506--507
 []\T1/ptm/m/n/10 Policy Server: Runs on GPU ma-chine, han-dles in-fer-ence (\T1/pcr/m/n/10 grasp_cube/real/serve_act_policy.py\T1/ptm/m/n/10 ) 
  []
 
 
-Overfull \hbox (93.47433pt too wide) in paragraph at lines 464--465
+Overfull \hbox (93.47433pt too wide) in paragraph at lines 507--508
 []\T1/ptm/m/n/10 Robot Client: Runs on robot ma-chine, han-dles en-vi-ron-ment in-ter-ac-tion (\T1/pcr/m/n/10 grasp_cube/real/run_env_client.py\T1/ptm/m/n/10 ) 
  []
 
-[8]
-Overfull \hbox (56.06355pt too wide) in paragraph at lines 506--507
+[9]
+Overfull \hbox (56.06355pt too wide) in paragraph at lines 549--550
 []\T1/ptm/b/n/10 ACT Pol-icy Im-ple-men-ta-tion\T1/ptm/m/n/10 : Com-plete 417-line im-ple-men-ta-tion in \T1/pcr/m/n/10 grasp_cube/real/act_policy.py
  []
 
 
-Overfull \hbox (113.27388pt too wide) in paragraph at lines 507--508
+Overfull \hbox (113.27388pt too wide) in paragraph at lines 550--551
 []\T1/ptm/b/n/10 Server-Client Ar-chi-tec-ture\T1/ptm/m/n/10 : WebSocket-based com-mu-ni-ca-tion sys-tem in \T1/pcr/m/n/10 grasp_cube/real/serve_act_policy.py
  []
 
 
-Overfull \hbox (98.80449pt too wide) in paragraph at lines 509--510
+Overfull \hbox (98.80449pt too wide) in paragraph at lines 552--553
 []\T1/ptm/b/n/10 Monitoring In-fras-truc-ture\T1/ptm/m/n/10 : Com-pre-hen-sive log-ging and mon-i-tor-ing in \T1/pcr/m/n/10 grasp_cube/real/monitor_wrapper.py 
  []
 
-[9] (./final_report.aux)
+[10] (./final_report.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
 Package rerunfilecheck Info: File `final_report.out' has not changed.
-(rerunfilecheck)             Checksum: 154D0CA85674A3270E68A0C6C80FEF75;5956.
+(rerunfilecheck)             Checksum: 100408EDE605F504E9C6AB41307BF4B1;5865.
  ) 
 Here is how much of TeX's memory you used:
- 16235 strings out of 476720
- 255519 string characters out of 5801443
- 2029842 words of memory out of 5000000
- 38031 multiletter control sequences out of 15000+600000
+ 16262 strings out of 476720
+ 255912 string characters out of 5801443
+ 2117842 words of memory out of 5000000
+ 38058 multiletter control sequences out of 15000+600000
  605921 words of font info for 117 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
  72i,10n,79p,1052b,1900s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on final_report.pdf (9 pages).
+Output written on final_report.pdf (10 pages).

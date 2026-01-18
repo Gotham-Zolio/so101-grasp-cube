@@ -15,3 +15,6 @@ demos
 datasets
 outputs
 configs
+
+# Trained checkpoints (large files)
+checkpoint_real_robot/
