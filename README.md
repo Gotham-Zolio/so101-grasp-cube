@@ -28,7 +28,11 @@ This guide supports **two training approaches**:
 
 ## Pre-trained Checkpoints
 
-The `checkpoint_real_robot/` directory contains pre-trained ACT policy checkpoints for the three benchmark tasks (lift, sort, stack) trained on real robot demonstrations. These checkpoints can be used directly for evaluation or deployment without retraining.
+Pre-trained ACT policy checkpoints for the three benchmark tasks (lift, sort, stack) trained on real robot demonstrations are available for download. These checkpoints can be used directly for evaluation or deployment without retraining.
+
+**Download Link**: [https://cloud.tsinghua.edu.cn/d/bc1e7b7e9fae40a39160/](https://cloud.tsinghua.edu.cn/d/bc1e7b7e9fae40a39160/)
+
+After downloading, place the `checkpoint_real_robot/` directory in the project root.
 
 ---
 
