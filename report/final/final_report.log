@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 23:29
+This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 23:43
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -640,9 +640,13 @@ Package inputenc Warning: inputenc package ignored with utf8 based engines.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 236.
  [4]
+Overfull \hbox (77.3953pt too wide) in paragraph at lines 282--283
+\T1/ptm/m/n/10 robot demon-stra-tions are avail-able at: [][]$\T1/pcr/m/n/10 https : / / cloud . tsinghua . edu . cn / d / bc1e7b7e9fae40a39160/$[][]\T1/ptm/m/n/10 .
+ []
+
 File: figs/real_robot_train_loss.png Graphic file (type bmp)
 <figs/real_robot_train_loss.png>
- [5]
+[5]
 Overfull \hbox (3.85255pt too wide) in paragraph at lines 356--357
 []\T1/ptm/b/n/10 Modeling Non-deterministic Be-hav-iors: \T1/ptm/m/n/10 It uti-lizes a Con-di-tional Vari-a-tional Au-toen-coder (CVAE)
  []
