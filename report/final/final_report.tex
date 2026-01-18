@@ -91,10 +91,14 @@ This project implements a comprehensive pipeline for training and deploying \tex
 \begin{enumerate}
     \item \textbf{Simulation Environment Setup}: Created a unified SAPIEN-based simulation environment supporting all three benchmark tasks (Lift, Sort, Stack) and a custom obstacle avoidance task with proper camera configurations and robot dynamics. \textit{(See: grasp\_cube/envs/tasks/lift\_cube\_so101.py, sort\_cube\_so101.py, stack\_cube\_so101.py, avoid\_obstacle\_so101.py)}
     \item \textbf{Data Collection and Preprocessing}: Collected and preprocessed expert demonstration trajectories for all tasks using a structured data pipeline. \textit{(See: scripts/collect\_motion\_planning\_data.py, scripts/prepare\_real\_data.py)}
-    \item \textbf{ACT Policy Training}: Implemented and trained Transformer-based policies for high-precision action sequence prediction. \textit{(See: scripts/train\_act\_real\_data.py, scripts/train\_act\_real\_data\_lerobot\_dataset.py)}
+    \item \textbf{ACT Policy Training}: Implemented and trained Transformer-based policies \\
+    for high-precision action sequence prediction. \textit{(See: scripts/train\_act\_real\_data.py, \\
+    scripts/train\_act\_real\_data\_lerobot\_dataset.py)}
     \item \textbf{Offline Inference Validation}: Developed comprehensive inference infrastructure with 100\% test pass rate (6/6 tests). \textit{(See: scripts/eval\_sim\_policy.py, scripts/eval\_real\_policy.py)}
     \item \textbf{Real Robot Integration Framework}: Created modular interfaces for seamless sim-to-real transfer, including sensor fusion and action execution protocols. \textit{(See: grasp\_cube/real/act\_policy.py, grasp\_cube/real/lerobot\_env.py)}
-    \item \textbf{Deployment Infrastructure}: Built server-client architecture and Docker containerization for production deployment. \textit{(See: grasp\_cube/real/serve\_act\_policy.py, grasp\_cube/real/run\_env\_client.py)}
+    \item \textbf{Deployment Infrastructure}: Built server-client architecture and Docker \\
+    containerization for production deployment. \textit{(See: grasp\_cube/real/serve\_act\_policy.py, \\
+    grasp\_cube/real/run\_env\_client.py)}
 \end{enumerate}
 
 % --- 2. Implementation and Results ---
@@ -279,7 +283,10 @@ For deployment-ready policies, we use pre-collected real robot demonstrations:
     \item \textbf{Human Demonstrations}: Direct teleoperation on SO-101 robot
     \item \textbf{Data Format}: HDF5 trajectories with real sensor data
     \item \textbf{Tasks}: Lift, Sort, Stack with human expert trajectories
-    \item \textbf{Pre-trained Checkpoints}: Pre-trained ACT policy checkpoints for all three tasks trained on real robot demonstrations are available at: \url{https://cloud.tsinghua.edu.cn/d/bc1e7b7e9fae40a39160/}. Download and place the \texttt{checkpoint\_real\_robot/} directory in the project root for direct deployment and evaluation.
+    \item \textbf{Pre-trained Checkpoints}: Pre-trained ACT policy checkpoints for all three tasks \\
+    trained on real robot demonstrations are available at: \\
+    \url{https://cloud.tsinghua.edu.cn/d/bc1e7b7e9fae40a39160/}. \\
+    Download and place the \texttt{checkpoint\_real\_robot/} directory in the project root for direct deployment and evaluation.
 \end{itemize}
 
 \textbf{Real Robot Dataset Statistics:}
@@ -369,7 +376,8 @@ In our self-difined problem, we extend the standard ACT implementation by integr
 
 Our method meaningfully differs from the existing LeRobot ACT codebase by introducing a dynamic, online Visual Augmentation Pipeline within the training loop. In the original LeRobot implementation, the image processing pipeline is strictly limited to resizing and normalization. This assumption holds only if the test environment matches the training demonstrations exactly.
 
-To address this limitation, we implemented a custom \texttt{VisualAugmentation} module in \texttt{grasp\_cube/utils/data\_augmentation.py} and integrated it directly into the \texttt{ACTPolicy} forward pass. Key modifications include:
+To address this limitation, we implemented a custom \texttt{VisualAugmentation} module in \\
+\texttt{grasp\_cube/utils/data\_augmentation.py} and integrated it directly into the \texttt{ACTPolicy} forward pass. Key modifications include:
 
 \begin{enumerate}
     \item \textbf{Online Perturbation:} Instead of offline dataset augmentation, we apply random augmentations on-the-fly. This ensures the model encounters effectively infinite variations of the training data.
@@ -468,13 +476,20 @@ To verify the effectiveness of our \texttt{VisualAugmentation} module (Generaliz
 
 \subsection{Grading Summary ($c_{method}, c_{success}, c_{analysis}$)}
 
-We self-assess according to the given criteria. \textbf{Data:} \texttt{eval\_results/baseline\_no\_disturbance}, \texttt{baseline\_with\_disturbance}, \texttt{augmented\_no\_disturbance}, \texttt{augmented\_with\_disturbance} under \texttt{AvoidObstacleSO101-v1/}.
+We self-assess according to the given criteria. \textbf{Data:} \\
+\texttt{eval\_results/baseline\_no\_disturbance}, \\
+\texttt{baseline\_with\_disturbance}, \\
+\texttt{augmented\_no\_disturbance}, \\
+\texttt{augmented\_with\_disturbance} under \texttt{AvoidObstacleSO101-v1/}.
 
 \begin{itemize}
     \item \textbf{$c_{method}$ (2 pts max)}
     \begin{itemize}
         \item \textbf{Baseline runs successfully (1 pt):} Baseline ACT reaches 92\% without disturbance. \checkmark
-        \item \textbf{Difference from codebase (0.5 pt):} We add an online \texttt{VisualAugmentation} in \texttt{ACTPolicy.forward} and a custom \texttt{grasp\_cube/utils/data\_augmentation.py}; LeRobot only does resize and normalization. \checkmark
+        \item \textbf{Difference from codebase (0.5 pt):} We add an online \texttt{VisualAugmentation} \\
+        in \texttt{ACTPolicy.forward} and a custom \\
+        \texttt{grasp\_cube/utils/data\_augmentation.py}; \\
+        LeRobot only does resize and normalization. \checkmark
         \item \textbf{Efficiency (0.5 pt):} Baseline and augmented use the same expert demos and 50k steps. We did \emph{not} run a reduced-demonstration experiment; we do not claim this 0.5 pt.
         \item \textbf{Generalization (0.5 pt):} With disturbance, baseline 0\% vs.\ augmented 14\%. The augmented policy performs outside the training range (visual shift) as verified by the disturbance experiment. \checkmark
         \item \textbf{Other dimensions (up to 0.5 pt):} We submit long horizon, dual-arm coordination, obstacle structure, and compositional skill synthesis (cf.\ Task Complexity) for TA/instructor assessment.
@@ -503,8 +518,10 @@ The deployment uses a server-client architecture with WebSocket communication to
 The server-client architecture enables distributed deployment:
 
 \begin{itemize}
-    \item Policy Server: Runs on GPU machine, handles inference (\texttt{grasp\_cube/real/serve\_act\_policy.py})
-    \item Robot Client: Runs on robot machine, handles environment interaction (\texttt{grasp\_cube/real/run\_env\_client.py})
+    \item Policy Server: Runs on GPU machine, handles inference \\
+    (\texttt{grasp\_cube/real/serve\_act\_policy.py})
+    \item Robot Client: Runs on robot machine, handles environment interaction \\
+    (\texttt{grasp\_cube/real/run\_env\_client.py})
     \item WebSocket communication for real-time data exchange
     \item Independent scaling and robustness benefits
 \end{itemize}
@@ -546,10 +563,14 @@ The evaluation infrastructure supports systematic testing with 50 episodes per t
 The real robot deployment framework is fully implemented and ready for testing:
 
 \begin{itemize}
-    \item \textbf{ACT Policy Implementation}: Complete 417-line implementation in \texttt{grasp\_cube/real/act\_policy.py} with comprehensive error handling
-    \item \textbf{Server-Client Architecture}: WebSocket-based communication system in \texttt{grasp\_cube/real/serve\_act\_policy.py} and \texttt{grasp\_cube/real/run\_env\_client.py}
+    \item \textbf{ACT Policy Implementation}: Complete 417-line implementation in \\
+    \texttt{grasp\_cube/real/act\_policy.py} with comprehensive error handling
+    \item \textbf{Server-Client Architecture}: WebSocket-based communication system in \\
+    \texttt{grasp\_cube/real/serve\_act\_policy.py} and \\
+    \texttt{grasp\_cube/real/run\_env\_client.py}
     \item \textbf{Action Execution}: Integrated with robot control systems for real-time command execution
-    \item \textbf{Monitoring Infrastructure}: Comprehensive logging and monitoring in \texttt{grasp\_cube/real/monitor\_wrapper.py}
+    \item \textbf{Monitoring Infrastructure}: Comprehensive logging and monitoring in \\
+    \texttt{grasp\_cube/real/monitor\_wrapper.py}
 \end{itemize}
 
 The system handles state dimension mismatches (6-dim vs 12-dim actions), provides graceful error handling, and supports both GPU and CPU inference modes.

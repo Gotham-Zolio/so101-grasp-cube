@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 23:43
+This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 23:53
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -592,26 +592,16 @@ Overfull \hbox (0.72356pt too wide) in paragraph at lines 92--93
  []
 
 
-Overfull \hbox (50.28212pt too wide) in paragraph at lines 94--95
-\T1/ptm/m/n/10 tion se-quence pre-dic-tion. \T1/ptm/m/it/10 (See: script-s/-train_act_real_data.py, script-s/-train_act_real_data_lerobot_dataset.py) 
- []
-
-
-Overfull \hbox (8.85327pt too wide) in paragraph at lines 97--98
-\T1/ptm/m/n/10 duc-tion de-ploy-ment. \T1/ptm/m/it/10 (See: grasp_cube/real/serve_act_policy.py, grasp_cube/real/run_env_client.py) 
- []
-
-
-Overfull \hbox (30.94281pt too wide) in paragraph at lines 107--108
+Overfull \hbox (30.94281pt too wide) in paragraph at lines 111--112
 \T1/ptm/m/n/10 dataset for-mat and pol-icy train-ing pipeline. \T1/ptm/m/it/10 (See: grasp_cube/envs/tasks/lift_cube_so101.py, sort_cube_so101.py,
  []
 
 
-Overfull \hbox (78.20308pt too wide) in paragraph at lines 110--111
+Overfull \hbox (78.20308pt too wide) in paragraph at lines 114--115
 \T1/ptm/m/n/10 space. The red cube spawns ran-domly in the right arm's workspace re-gion. \T1/ptm/m/it/10 (grasp_cube/envs/tasks/lift_cube_so101.py) 
  []
 
-LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 119.
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 123.
 (d:/texlive/2024/texmf-dist/tex/latex/psnfss/ts1ptm.fd
 File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
 ) [2]
@@ -623,8 +613,8 @@ File: figs/custom_task.png Graphic file (type bmp)
 <figs/custom_task.png>
 
 Missing character: There is no → ("2192) in font ptmr8t!
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 199.
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 199.
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 203.
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 203.
 (d:/texlive/2024/texmf-dist/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
@@ -638,28 +628,19 @@ Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
 [3]
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 236.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 240.
  [4]
-Overfull \hbox (77.3953pt too wide) in paragraph at lines 282--283
-\T1/ptm/m/n/10 robot demon-stra-tions are avail-able at: [][]$\T1/pcr/m/n/10 https : / / cloud . tsinghua . edu . cn / d / bc1e7b7e9fae40a39160/$[][]\T1/ptm/m/n/10 .
- []
-
 File: figs/real_robot_train_loss.png Graphic file (type bmp)
 <figs/real_robot_train_loss.png>
-[5]
-Overfull \hbox (3.85255pt too wide) in paragraph at lines 356--357
+ [5]
+Overfull \hbox (3.85255pt too wide) in paragraph at lines 363--364
 []\T1/ptm/b/n/10 Modeling Non-deterministic Be-hav-iors: \T1/ptm/m/n/10 It uti-lizes a Con-di-tional Vari-a-tional Au-toen-coder (CVAE)
  []
 
 Missing character: There is no — ("2014) in font ptmr8t!
 Missing character: There is no — ("2014) in font ptmr8t!
 
-Overfull \hbox (180.02428pt too wide) in paragraph at lines 372--373
-[]\T1/ptm/m/n/10 To ad-dress this lim-i-ta-tion, we im-ple-mented a cus-tom \T1/pcr/m/n/10 VisualAugmentation \T1/ptm/m/n/10 mod-ule in \T1/pcr/m/n/10 grasp_cube/utils/data_augmentation.py
- []
-
-
-Overfull \hbox (7.5833pt too wide) in paragraph at lines 378--379
+Overfull \hbox (7.5833pt too wide) in paragraph at lines 386--387
 []\T1/ptm/b/n/10 Color Jit-ter: \T1/ptm/m/n/10 Ran-dom ad-just-ments to bright-ness ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ), con-trast ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ), sat-u-ra-tion ($\OMS/ztmcm/m/n/10 ^^F\OT1/ztmcm/m/n/10 30%$\T1/ptm/m/n/10 ),
  []
 
@@ -670,90 +651,50 @@ Package inputenc Warning: inputenc package ignored with utf8 based engines.
 [7]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 465.
+(hyperref)                removing `math shift' on input line 473.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 465.
+(hyperref)                removing `subscript' on input line 473.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 465.
+(hyperref)                removing `math shift' on input line 473.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 469.
+(hyperref)                removing `math shift' on input line 477.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 469.
+(hyperref)                removing `subscript' on input line 477.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 469.
+(hyperref)                removing `subscript' on input line 477.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 469.
+(hyperref)                removing `subscript' on input line 477.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 469.
-
-
-Overfull \hbox (8.2849pt too wide) in paragraph at lines 471--472
-\T1/ptm/m/n/10 We self-assess ac-cord-ing to the given cri-te-ria. \T1/ptm/b/n/10 Data: \T1/pcr/m/n/10 eval_results/baseline_no_disturbance\T1/ptm/m/n/10 ,
- []
-
-
-Overfull \hbox (42.20715pt too wide) in paragraph at lines 471--472
-\T1/pcr/m/n/10 baseline_with_disturbance\T1/ptm/m/n/10 , \T1/pcr/m/n/10 augmented_no_disturbance\T1/ptm/m/n/10 , \T1/pcr/m/n/10 augmented_with_disturbance
- []
-
-
-Overfull \hbox (66.5755pt too wide) in paragraph at lines 477--478
-[]\T1/ptm/b/n/10 Difference from code-base (0.5 pt): \T1/ptm/m/n/10 We add an on-line \T1/pcr/m/n/10 VisualAugmentation \T1/ptm/m/n/10 in \T1/pcr/m/n/10 ACTPolicy.forward
- []
+(hyperref)                removing `math shift' on input line 477.
 
 [8]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 486.
+(hyperref)                removing `math shift' on input line 501.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 486.
+(hyperref)                removing `subscript' on input line 501.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 486.
+(hyperref)                removing `math shift' on input line 501.
 
-
-Overfull \hbox (49.2046pt too wide) in paragraph at lines 506--507
-[]\T1/ptm/m/n/10 Policy Server: Runs on GPU ma-chine, han-dles in-fer-ence (\T1/pcr/m/n/10 grasp_cube/real/serve_act_policy.py\T1/ptm/m/n/10 ) 
- []
-
-
-Overfull \hbox (93.47433pt too wide) in paragraph at lines 507--508
-[]\T1/ptm/m/n/10 Robot Client: Runs on robot ma-chine, han-dles en-vi-ron-ment in-ter-ac-tion (\T1/pcr/m/n/10 grasp_cube/real/run_env_client.py\T1/ptm/m/n/10 ) 
- []
-
-[9]
-Overfull \hbox (56.06355pt too wide) in paragraph at lines 549--550
-[]\T1/ptm/b/n/10 ACT Pol-icy Im-ple-men-ta-tion\T1/ptm/m/n/10 : Com-plete 417-line im-ple-men-ta-tion in \T1/pcr/m/n/10 grasp_cube/real/act_policy.py
- []
-
-
-Overfull \hbox (113.27388pt too wide) in paragraph at lines 550--551
-[]\T1/ptm/b/n/10 Server-Client Ar-chi-tec-ture\T1/ptm/m/n/10 : WebSocket-based com-mu-ni-ca-tion sys-tem in \T1/pcr/m/n/10 grasp_cube/real/serve_act_policy.py
- []
-
-
-Overfull \hbox (98.80449pt too wide) in paragraph at lines 552--553
-[]\T1/ptm/b/n/10 Monitoring In-fras-truc-ture\T1/ptm/m/n/10 : Com-pre-hen-sive log-ging and mon-i-tor-ing in \T1/pcr/m/n/10 grasp_cube/real/monitor_wrapper.py 
- []
-
-[10] (./final_report.aux)
+[9] [10] (./final_report.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
