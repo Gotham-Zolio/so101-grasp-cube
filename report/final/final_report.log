@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  17 JAN 2026 16:36
+This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.12)  18 JAN 2026 18:09
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -287,25 +287,31 @@ Package caption Info: New subtype `subfigure' on input line 238.
 \c@subfigure=\count284
 Package caption Info: New subtype `subtable' on input line 238.
 \c@subtable=\count285
+) (d:/texlive/2024/texmf-dist/tex/latex/multirow/multirow.sty
+Package: multirow 2021/03/15 v2.8 Span multiple rows of a table
+\multirow@colwidth=\skip56
+\multirow@cntb=\count286
+\multirow@dima=\skip57
+\bigstrutjot=\dimen184
 ) (d:/texlive/2024/texmf-dist/tex/latex/listings/listings.sty
-\lst@mode=\count286
+\lst@mode=\count287
 \lst@gtempboxa=\box57
 \lst@token=\toks32
-\lst@length=\count287
-\lst@currlwidth=\dimen184
-\lst@column=\count288
-\lst@pos=\count289
-\lst@lostspace=\dimen185
-\lst@width=\dimen186
-\lst@newlines=\count290
-\lst@lineno=\count291
-\lst@maxwidth=\dimen187
+\lst@length=\count288
+\lst@currlwidth=\dimen185
+\lst@column=\count289
+\lst@pos=\count290
+\lst@lostspace=\dimen186
+\lst@width=\dimen187
+\lst@newlines=\count291
+\lst@lineno=\count292
+\lst@maxwidth=\dimen188
  (d:/texlive/2024/texmf-dist/tex/latex/listings/lstpatch.sty
 File: lstpatch.sty 2024/02/21 1.10 (Carsten Heinz)
 ) (d:/texlive/2024/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2024/02/21 1.10 (Carsten Heinz)
-\c@lstnumber=\count292
-\lst@skipnumbers=\count293
+\c@lstnumber=\count293
+\lst@skipnumbers=\count294
 \lst@framebox=\box58
 ) (d:/texlive/2024/texmf-dist/tex/latex/listings/listings.cfg
 File: listings.cfg 2024/02/21 1.10 listings configuration
@@ -346,17 +352,17 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
  (d:/texlive/2024/texmf-dist/tex/latex/kvoptions/kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count294
+\c@section@level=\count295
 )
-\@linkdim=\dimen188
-\Hy@linkcounter=\count295
-\Hy@pagecounter=\count296
+\@linkdim=\dimen189
+\Hy@linkcounter=\count296
+\Hy@pagecounter=\count297
  (d:/texlive/2024/texmf-dist/tex/latex/hyperref/pd1enc.def
 File: pd1enc.def 2024-01-20 v7.01h Hyperref: PDFDocEncoding definition (HO)
 ) (d:/texlive/2024/texmf-dist/tex/generic/intcalc/intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count297
+\Hy@SavedSpaceFactor=\count298
  (d:/texlive/2024/texmf-dist/tex/latex/hyperref/puenc.def
 File: puenc.def 2024-01-20 v7.01h Hyperref: PDF Unicode definition (HO)
 )
@@ -369,17 +375,17 @@ Package hyperref Info: Plain pages OFF on input line 4194.
 Package hyperref Info: Backreferencing OFF on input line 4199.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4446.
-\c@Hy@tempcnt=\count298
+\c@Hy@tempcnt=\count299
 LaTeX Info: Redefining \url on input line 4784.
-\XeTeXLinkMargin=\dimen189
+\XeTeXLinkMargin=\dimen190
  (d:/texlive/2024/texmf-dist/tex/generic/bitset/bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
  (d:/texlive/2024/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO)
 ))
-\Fld@menulength=\count299
-\Field@Width=\dimen190
-\Fld@charsize=\dimen191
+\Fld@menulength=\count300
+\Field@Width=\dimen191
+\Fld@charsize=\dimen192
 Package hyperref Info: Hyper figures OFF on input line 6063.
 Package hyperref Info: Link nesting OFF on input line 6068.
 Package hyperref Info: Hyper index ON on input line 6071.
@@ -391,8 +397,8 @@ Package hyperref Info: PDF/A mode OFF on input line 6093.
 Package: atbegshi-ltx 2021/01/10 v1.0c Emulation of the original atbegshi
 package with kernel methods
 )
-\c@Item=\count300
-\c@Hfootnote=\count301
+\c@Item=\count301
+\c@Hfootnote=\count302
 )
 Package hyperref Info: Driver (autodetected): hxetex.
  (d:/texlive/2024/texmf-dist/tex/latex/hyperref/hxetex.def
@@ -401,10 +407,10 @@ File: hxetex.def 2024-01-20 v7.01h Hyperref driver for XeTeX
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO)
 )
 \pdfm@box=\box59
-\c@Hy@AnnotLevel=\count302
-\HyField@AnnotCount=\count303
-\Fld@listcount=\count304
-\c@bookmark@seq@number=\count305
+\c@Hy@AnnotLevel=\count303
+\HyField@AnnotCount=\count304
+\Fld@listcount=\count305
+\c@bookmark@seq@number=\count306
  (d:/texlive/2024/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
 Package: rerunfilecheck 2022-07-10 v1.10 Rerun checks for auxiliary files (HO)
  (d:/texlive/2024/texmf-dist/tex/latex/base/atveryend-ltx.sty
@@ -415,57 +421,56 @@ Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 )
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 285.
 )
-\Hy@SectionHShift=\skip56
+\Hy@SectionHShift=\skip58
 ) (d:/texlive/2024/texmf-dist/tex/latex/titlesec/titlesec.sty
 Package: titlesec 2023/10/27 v2.16 Sectioning titles
 \ttl@box=\box60
-\beforetitleunit=\skip57
-\aftertitleunit=\skip58
-\ttl@plus=\dimen192
-\ttl@minus=\dimen193
+\beforetitleunit=\skip59
+\aftertitleunit=\skip60
+\ttl@plus=\dimen193
+\ttl@minus=\dimen194
 \ttl@toksa=\toks33
-\titlewidth=\dimen194
-\titlewidthlast=\dimen195
-\titlewidthfirst=\dimen196
+\titlewidth=\dimen195
+\titlewidthlast=\dimen196
+\titlewidthfirst=\dimen197
 )
-LaTeX Font Info:    Trying to load font information for T1+ptm on input line 73.
+LaTeX Font Info:    Trying to load font information for T1+ptm on input line 74.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/t1ptm.fd
 File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 ) (d:/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-xetex.def
 File: l3backend-xetex.def 2024-02-20 L3 backend support: XeTeX
-\g__graphics_track_int=\count306
+\g__graphics_track_int=\count307
 \l__pdf_internal_box=\box61
-\g__pdf_backend_object_int=\count307
-\g__pdf_backend_annotation_int=\count308
-\g__pdf_backend_link_int=\count309
-)
-No file final_report.aux.
+\g__pdf_backend_object_int=\count308
+\g__pdf_backend_annotation_int=\count309
+\g__pdf_backend_link_int=\count310
+) (./final_report.aux)
 \openout1 = `final_report.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 73.
-LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 73.
-(d:/texlive/2024/texmf-dist/tex/latex/base/ts1cmr.fd
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 74.
+LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 74.
+ (d:/texlive/2024/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 73.
-LaTeX Font Info:    ... okay on input line 73.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 74.
+LaTeX Font Info:    ... okay on input line 74.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: xetex
@@ -501,12 +506,12 @@ LaTeX Font Info:    ... okay on input line 73.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 73.
-Package microtype Info: Applying patch `item' on input line 73.
-Package microtype Info: Applying patch `toc' on input line 73.
-Package microtype Info: Applying patch `eqnum' on input line 73.
-Package microtype Info: Applying patch `footnote' on input line 73.
-Package microtype Info: Applying patch `verbatim' on input line 73.
+LaTeX Info: Redefining \microtypecontext on input line 74.
+Package microtype Info: Applying patch `item' on input line 74.
+Package microtype Info: Applying patch `toc' on input line 74.
+Package microtype Info: Applying patch `eqnum' on input line 74.
+Package microtype Info: Applying patch `footnote' on input line 74.
+Package microtype Info: Applying patch `verbatim' on input line 74.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
 Package microtype Info: No adjustment of tracking.
@@ -519,12 +524,13 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: hyperref package is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
-\c@lstlisting=\count310
-Package hyperref Info: Link coloring ON on input line 73.
+\c@lstlisting=\count311
+Package hyperref Info: Link coloring ON on input line 74.
+ (./final_report.out) (./final_report.out)
 \@outlinefile=\write3
 \openout3 = `final_report.out'.
 
-LaTeX Font Info:    Trying to load font information for OT1+ztmcm on input line 76.
+LaTeX Font Info:    Trying to load font information for OT1+ztmcm on input line 77.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
 File: ot1ztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OT1/ztmcm.
 )
@@ -532,52 +538,56 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `ztmcm' (encoding: OT1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    Trying to load font information for OML+ztmcm on input line 76.
+LaTeX Font Info:    Trying to load font information for OML+ztmcm on input line 77.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/omlztmcm.fd
 File: omlztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OML/ztmcm.
 )
-LaTeX Font Info:    Trying to load font information for OMS+ztmcm on input line 76.
+LaTeX Font Info:    Trying to load font information for OMS+ztmcm on input line 77.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/omsztmcm.fd
 File: omsztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMS/ztmcm.
 )
-LaTeX Font Info:    Trying to load font information for OMX+ztmcm on input line 76.
+LaTeX Font Info:    Trying to load font information for OMX+ztmcm on input line 77.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/omxztmcm.fd
 File: omxztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMX/ztmcm.
 )
-LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 76.
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 77.
  (d:/texlive/2024/texmf-dist/tex/latex/psnfss/ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 76.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 77.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 76.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 77.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 76.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 77.
  (d:/texlive/2024/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 ) (d:/texlive/2024/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
-)
-LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 116.
- (d:/texlive/2024/texmf-dist/tex/latex/psnfss/ts1ptm.fd
-File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
-)
+) (./final_report.toc
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 116.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 2.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7.4> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 116.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 2.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <6> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 116.
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 2.
  [1
 
-]
-Overfull \hbox (6.29227pt too wide) in paragraph at lines 143--144
+])
+\tf@toc=\write4
+\openout4 = `final_report.toc'.
+
+ [2]
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 120.
+ (d:/texlive/2024/texmf-dist/tex/latex/psnfss/ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+) [3]
+Overfull \hbox (6.29227pt too wide) in paragraph at lines 148--149
 []\T1/ptm/b/n/10 Dynamic Nor-mal-iza-tion\T1/ptm/m/n/10 : Man-ual nor-mal-iza-tion/-de-nor-mal-iza-tion us-ing statis-tics (mean, std) loaded
  []
 
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 150.
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 150.
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 155.
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 155.
 (d:/texlive/2024/texmf-dist/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
@@ -589,24 +599,6 @@ Package microtype Info: Loading generic protrusion settings for font family
 
 Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
-Missing character: There is no ✓ ("2713) in font pcrr8t!
-
-Package inputenc Warning: inputenc package ignored with utf8 based engines.
-
-[2]
-
-Package inputenc Warning: inputenc package ignored with utf8 based engines.
-
-[3]
-Missing character: There is no ✓ ("2713) in font ptmb8t!
-LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 281.
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
 
 Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
@@ -614,208 +606,38 @@ Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
 Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
+
+Package inputenc Warning: inputenc package ignored with utf8 based engines.
+
 [5]
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✗ ("2717) in font ptmr8t!
-[6]
-
-Package inputenc Warning: inputenc package ignored with utf8 based engines.
-
-Missing character: There is no 固 ("56FA) in font pcrr8t!
-Missing character: There is no 定 ("5B9A) in font pcrr8t!
-Missing character: There is no 长 ("957F) in font pcrr8t!
-Missing character: There is no 度 ("5EA6) in font pcrr8t!
-Missing character: There is no 窗 ("7A97) in font pcrr8t!
-Missing character: There is no 口 ("53E3) in font pcrr8t!
-Missing character: There is no 滑 ("6ED1) in font pcrr8t!
-Missing character: There is no 动 ("52A8) in font pcrr8t!
-Missing character: There is no 窗 ("7A97) in font pcrr8t!
-Missing character: There is no 口 ("53E3) in font pcrr8t!
-Missing character: There is no 步 ("6B65) in font pcrr8t!
-Missing character: There is no 长 ("957F) in font pcrr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-[7]
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:582: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.582         \multirow
-                       {3}{*}{Lift} & 10 & \multicolumn{3}{c}{\textit{[To be...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:586: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.586         \multirow
-                       {3}{*}{Sort} & 10 & \multicolumn{3}{c}{\textit{[To be...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:590: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.590         \multirow
-                       {3}{*}{Stack} & 10 & \multicolumn{3}{c}{\textit{[To b...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-
-LaTeX Warning: Reference `lst:normalization' on page 8 undefined on input line 617.
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-[8]
-Overfull \hbox (17.62506pt too wide) in paragraph at lines 634--635
-[]\T1/ptm/m/n/10 Disable LeR-obot's built-in nor-mal-iz-ers: \T1/pcr/m/n/10 model.normalize_inputs = Identity() 
- []
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-
-Overfull \hbox (5.55678pt too wide) in paragraph at lines 642--643
-[]\T1/ptm/b/n/10 Error\T1/ptm/m/n/10 : \T1/pcr/m/n/10 ValueError: Expected shape (B, T, C, H, W), got (B, C, H,
- []
-
-
-LaTeX Warning: Reference `lst:image_preprocess' on page 9 undefined on input line 643.
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:661: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.661         \multirow
-                       {2}{*}{Approach Phase} & \multicolumn{2}{c}{\textit{[...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:663: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.663         \multirow
-                       {2}{*}{Grasping Phase} & \multicolumn{2}{c}{\textit{[...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:665: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.665         \multirow
-                       {2}{*}{Lift/Manipulation} & \multicolumn{2}{c}{\texti...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:667: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.667         \multirow
-                       {2}{*}{Recovery from Failures} & \multicolumn{2}{c}{\...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 288.
 
 
 Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
-[9]
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:746: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.746         \multirow
-                       {2}{*}{Inference} & DiffusionPolicyInferenceEngine & ...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:748: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.748         \multirow
-                       {2}{*}{Wrapper} & DiffusionInferenceWrapper & grasp\_...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:750: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.750         \multirow
-                       {2}{*}{Environment} & LeRobotEnv & grasp\_cube/real/l...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:752: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.752         \multirow
-                       {2}{*}{Monitoring} & Record Wrapper & grasp\_cube/rea...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:754: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.754         \multirow
-                       {1}{*}{Execution} & Action Executor & grasp\_cube/rea...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-
-Overfull \hbox (18.54163pt too wide) in paragraph at lines 742--757
- [][] 
+[6] [7]
+Overfull \hbox (55.85428pt too wide) in paragraph at lines 433--434
+\T1/ptm/m/n/10 Sort, Stack). These files are au-to-mat-i-cally gen-er-ated af-ter run-ning \T1/pcr/m/n/10 collect_motion_planning_data.py\T1/ptm/m/n/10 . 
  []
 
-Missing character: There is no ✓ ("2713) in font ptmr8t!
-Missing character: There is no ✓ ("2713) in font ptmr8t!
+
+Overfull \hbox (57.50496pt too wide) in paragraph at lines 436--437
+[]\T1/ptm/m/n/10 Evaluation re-sults for trained poli-cies are saved in \T1/pcr/m/n/10 eval_results/{task}/evaluation_summary.txt
+ []
+
+[8] [9]
+
+Package inputenc Warning: inputenc package ignored with utf8 based engines.
+
 [10]
+Missing character: There is no ✓ ("2713) in font ptmr8t!
+[11]
 
 Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
-[11]
 Missing character: There is no ✓ ("2713) in font ptmr8t!
-(d:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
+[12] (d:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/02/21 1.10 listings language file
 ) (d:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/02/21 1.10 listings language file
@@ -829,7 +651,6 @@ Package inputenc Warning: inputenc package ignored with utf8 based engines.
 Missing character: There is no ├ ("251C) in font pcrr8t!
 Missing character: There is no ─ ("2500) in font pcrr8t!
 Missing character: There is no ─ ("2500) in font pcrr8t!
-[12]
 Missing character: There is no │ ("2502) in font pcrr8t!
 Missing character: There is no ├ ("251C) in font pcrr8t!
 Missing character: There is no ─ ("2500) in font pcrr8t!
@@ -928,94 +749,46 @@ Missing character: There is no └ ("2514) in font pcrr8t!
 Missing character: There is no ─ ("2500) in font pcrr8t!
 Missing character: There is no ─ ("2500) in font pcrr8t!
 Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no │ ("2502) in font pcrr8t!
-Missing character: There is no └ ("2514) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-Missing character: There is no ─ ("2500) in font pcrr8t!
-
-Package inputenc Warning: inputenc package ignored with utf8 based engines.
-
 [13]
+Missing character: There is no └ ("2514) in font pcrr8t!
+Missing character: There is no ─ ("2500) in font pcrr8t!
+Missing character: There is no ─ ("2500) in font pcrr8t!
+Missing character: There is no │ ("2502) in font pcrr8t!
+Missing character: There is no └ ("2514) in font pcrr8t!
+Missing character: There is no ─ ("2500) in font pcrr8t!
+Missing character: There is no ─ ("2500) in font pcrr8t!
+Missing character: There is no │ ("2502) in font pcrr8t!
+Missing character: There is no └ ("2514) in font pcrr8t!
+Missing character: There is no ─ ("2500) in font pcrr8t!
+Missing character: There is no ─ ("2500) in font pcrr8t!
+
+Package inputenc Warning: inputenc package ignored with utf8 based engines.
+
+[14]
 
 Package inputenc Warning: inputenc package ignored with utf8 based engines.
 
 Missing character: There is no → ("2192) in font pcrr8t!
 Missing character: There is no → ("2192) in font pcrr8t!
-[14]
+[15]
 Missing character: There is no ✓ ("2713) in font ptmr8t!
 Missing character: There is no ✓ ("2713) in font ptmr8t!
 Missing character: There is no ✓ ("2713) in font ptmr8t!
-[15] [16]
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:1279: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.1279         \multirow
-                        {3}{*}{Lift} & Failed to grasp & \textit{[TBF]} & \t...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:1283: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.1283         \multirow
-                        {3}{*}{Sort} & Misclassification & \textit{[TBF]} & ...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-d:/75128/Desktop/so101-grasp-cube/report/final/final_report.tex:1287: Undefined control sequence.
-<recently read> \multirow 
-                          
-l.1287         \multirow
-                        {3}{*}{Stack} & Tower imbalance & \textit{[TBF]} & \...
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-[17]
-Missing character: There is no σ ("3C3) in font ptmr8t!
-[18] [19] (./final_report.aux)
+[16] [17] [18] (./final_report.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-
-Package rerunfilecheck Warning: File `final_report.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `final_report.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  D9AE197D2C10DCFEB9AD2EA3942F084D;13825.
+Package rerunfilecheck Info: File `final_report.out' has not changed.
+(rerunfilecheck)             Checksum: 9CCE5756909A091911BD472C77384D74;10845.
  ) 
 Here is how much of TeX's memory you used:
- 16109 strings out of 476720
- 253673 string characters out of 5801443
- 2411842 words of memory out of 5000000
- 37932 multiletter control sequences out of 15000+600000
- 609927 words of font info for 115 fonts, out of 8000000 for 9000
+ 16178 strings out of 476720
+ 254854 string characters out of 5801443
+ 2388842 words of memory out of 5000000
+ 37988 multiletter control sequences out of 15000+600000
+ 605249 words of font info for 113 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
  72i,10n,79p,1052b,1788s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on final_report.pdf (19 pages).
+Output written on final_report.pdf (18 pages).
